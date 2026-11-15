@@ -252,7 +252,7 @@ fn big_button(ui: &mut Ui, app: &mut WordApp, icon: &str, label: &str, id: &str,
     keytip_badge(ui, r, id, &label.replace('\n', " "));
     let on = enabled(app, id);
     bg(ui, r, &resp, checked, &t);
-    let ic = Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(32.0, 32.0));
+    let ic = Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(BIG_ICON, BIG_ICON));
     let (c, a) = if on { (t.icon, t.accent) } else { (t.text_disabled, t.text_disabled) };
     icons::paint(ui.painter(), ic, icon, c, a);
     let mut y = r.min.y + BIG_LABEL_Y;
@@ -271,20 +271,46 @@ fn big_button(ui: &mut Ui, app: &mut WordApp, icon: &str, label: &str, id: &str,
 
 /// A small button: 16 px icon with an optional label; `checked` draws the toggled state.
 pub fn small(ui: &mut Ui, app: &mut WordApp, icon: &str, label: Option<&str>, tip: &str, id: &str, params: Value, checked: bool) -> Response {
+    small_sized(ui, app, icon, label, tip, id, params, checked, vec2(SMALL_W, SMALL_H), SMALL_ICON)
+}
+
+/// Width of a small button's icon cell.
+pub const SMALL_W: f32 = 26.0;
+/// Height of a small button.
+pub const SMALL_H: f32 = 22.0;
+/// Size of a small button's icon (a little larger than Word's 16, as Документы draws them).
+pub const SMALL_ICON: f32 = 19.0;
+/// Size of a large button's icon.
+pub const BIG_ICON: f32 = 34.0;
+
+/// [`small`] in a cell of `size` (its width before the label) with an icon `icon_px` across.
+#[allow(clippy::too_many_arguments)]
+fn small_sized(
+    ui: &mut Ui,
+    app: &mut WordApp,
+    icon: &str,
+    label: Option<&str>,
+    tip: &str,
+    id: &str,
+    params: Value,
+    checked: bool,
+    size: egui::Vec2,
+    icon_px: f32,
+) -> Response {
     let (label, tip) = (label.map(|l| tl!(l)), tl!(tip));
     // A compact group (#662) shows only the icon; the tooltip keeps the name.
     let label = label.filter(|_| !crate::ribbon_fit::compact(ui.ctx()));
     let t = Tokens::get(ui.ctx());
     let text_w = label.map(|l| ui.ctx().fonts_mut(|f| f.layout_no_wrap(l.to_string(), regular(11.5), t.text).size().x) + 6.0).unwrap_or(0.0);
-    let (r, resp) = ui.allocate_exact_size(vec2(24.0 + text_w, 22.0), Sense::click());
+    let (r, resp) = ui.allocate_exact_size(vec2(size.x + text_w, size.y), Sense::click());
     keytip_badge(ui, r, id, tip);
     let on = enabled(app, id);
     bg(ui, r, &resp, checked, &t);
-    let ic = Rect::from_center_size(pos2(r.min.x + 12.0, r.center().y), vec2(17.0, 17.0));
+    let ic = Rect::from_center_size(pos2(r.min.x + size.x / 2.0, r.center().y), vec2(icon_px, icon_px));
     let (c, a) = if on { (t.icon, t.accent) } else { (t.text_disabled, t.text_disabled) };
     icons::paint(ui.painter(), ic, icon, c, a);
     if let Some(l) = label {
-        ui.painter().text(pos2(r.min.x + 24.0, r.center().y), Align2::LEFT_CENTER, l, regular(11.5), if on { t.text } else { t.text_disabled });
+        ui.painter().text(pos2(r.min.x + size.x, r.center().y), Align2::LEFT_CENTER, l, regular(11.5), if on { t.text } else { t.text_disabled });
     }
     let resp = tooltip(app, resp, tip, id);
     command_menu(&resp, app, id);
@@ -309,13 +335,13 @@ pub fn split(
 ) {
     let tip = tl!(tip);
     let t = Tokens::get(ui.ctx());
-    let (r, resp) = ui.allocate_exact_size(vec2(24.0, 22.0), Sense::click());
+    let (r, resp) = ui.allocate_exact_size(vec2(SMALL_W, SMALL_H), Sense::click());
     keytip_badge(ui, r, id, tip);
-    let (ar, aresp) = ui.allocate_exact_size(vec2(11.0, 22.0), Sense::click());
+    let (ar, aresp) = ui.allocate_exact_size(vec2(11.0, SMALL_H), Sense::click());
     let on = enabled(app, id);
     bg(ui, r, &resp, checked, &t);
     bg(ui, ar, &aresp, false, &t);
-    let ic = Rect::from_center_size(r.center(), vec2(17.0, 17.0));
+    let ic = Rect::from_center_size(r.center() - vec2(0.0, if swatch.is_some() { 1.5 } else { 0.0 }), vec2(SMALL_ICON, SMALL_ICON));
     let (c, a) = if on { (t.icon, t.accent) } else { (t.text_disabled, t.text_disabled) };
     icons::paint(ui.painter(), ic, icon, c, a);
     if let Some(sw) = swatch {
@@ -373,7 +399,7 @@ pub fn menu_button(
         let (r, resp) = ui.allocate_exact_size(vec2(w, CONTENT_H), Sense::click());
         keytip_badge(ui, r, "menu", tip);
         bg(ui, r, &resp, false, &t);
-        icons::paint(ui.painter(), Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(32.0, 32.0)), icon, c, a);
+        icons::paint(ui.painter(), Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(BIG_ICON, BIG_ICON)), icon, c, a);
         let lines: Vec<&str> = label.unwrap_or("").split('\n').collect();
         let mut y = r.min.y + BIG_LABEL_Y;
         for (i, l) in lines.iter().enumerate() {
@@ -383,12 +409,12 @@ pub fn menu_button(
         resp
     } else {
         let text_w = label.map(|l| ui.ctx().fonts_mut(|f| f.layout_no_wrap(l.to_string(), regular(11.5), t.text).size().x) + 6.0).unwrap_or(0.0);
-        let (r, resp) = ui.allocate_exact_size(vec2(24.0 + text_w + 10.0, 22.0), Sense::click());
+        let (r, resp) = ui.allocate_exact_size(vec2(SMALL_W + text_w + 10.0, SMALL_H), Sense::click());
         keytip_badge(ui, r, "menu", tip);
         bg(ui, r, &resp, false, &t);
-        icons::paint(ui.painter(), Rect::from_center_size(pos2(r.min.x + 12.0, r.center().y), vec2(17.0, 17.0)), icon, c, a);
+        icons::paint(ui.painter(), Rect::from_center_size(pos2(r.min.x + SMALL_W / 2.0, r.center().y), vec2(SMALL_ICON, SMALL_ICON)), icon, c, a);
         if let Some(l) = label {
-            ui.painter().text(pos2(r.min.x + 24.0, r.center().y), Align2::LEFT_CENTER, l, regular(11.5), text);
+            ui.painter().text(pos2(r.min.x + SMALL_W, r.center().y), Align2::LEFT_CENTER, l, regular(11.5), text);
         }
         icons::paint(ui.painter(), Rect::from_center_size(pos2(r.max.x - 6.0, r.center().y), vec2(DROPDOWN, DROPDOWN)), "dropdown", c, c);
         resp
@@ -510,7 +536,7 @@ fn collapsed_group(
     bg(ui, r, &resp, was_open, &t);
     icons::paint(
         ui.painter(),
-        Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(32.0, 32.0)),
+        Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(crate::widgets::BIG_ICON, crate::widgets::BIG_ICON)),
         group_icon(id_title),
         t.icon,
         t.accent,
@@ -518,6 +544,23 @@ fn collapsed_group(
     label_line(ui, r.center().x, r.min.y + BIG_LABEL_Y, title, regular(11.5), t.text, true);
     let resp = resp.on_hover_text(title);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, title));
+    group_drop_down(ui, &resp, open_id, was_open, id_title, title, launcher, app, add);
+}
+
+/// The drop-down of a folded group under `resp` (its button): the whole group as designed, with
+/// its title and launcher; `was_open` is whether it was open last frame (kept under `open_id`).
+#[allow(clippy::too_many_arguments)]
+fn group_drop_down(
+    ui: &mut Ui,
+    resp: &Response,
+    open_id: egui::Id,
+    was_open: bool,
+    id_title: &str,
+    title: &str,
+    launcher: Option<&str>,
+    app: &mut WordApp,
+    add: impl FnOnce(&mut Ui, &mut WordApp),
+) {
     let mut open = was_open;
     if resp.clicked() {
         open = !open;
@@ -537,7 +580,7 @@ fn collapsed_group(
         // This popup isn't counted by `Popup::is_any_open`, so keep the same Esc from also leaving
         // full screen.
         app.escape_free = false;
-        egui::Popup::menu(&resp).open_bool(&mut shown).close_behavior(egui::PopupCloseBehavior::IgnoreClicks).show(|ui| {
+        egui::Popup::menu(resp).open_bool(&mut shown).close_behavior(egui::PopupCloseBehavior::IgnoreClicks).show(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal_top(|ui| {
                     ui.set_min_height(CONTENT_H);
@@ -553,6 +596,58 @@ fn collapsed_group(
         }
     }
     ui.data_mut(|d| d.insert_temp(open_id, shown));
+}
+
+/// A ribbon group that keeps a column of its most used buttons when the window is too narrow for
+/// it (Документы: Home › Paragraph keeps the four alignments): drawn as designed (or compact) like
+/// [`group`] while there is room; folded, `narrow` draws its buttons one under another (each
+/// [`mini`]) and a small ▼ under them, in place of the title, opens the whole group.
+pub fn group_narrow(
+    ui: &mut Ui,
+    title: &str,
+    launcher: Option<&str>,
+    app: &mut WordApp,
+    narrow: impl FnOnce(&mut Ui, &mut WordApp),
+    add: impl FnOnce(&mut Ui, &mut WordApp),
+) {
+    if crate::ribbon_fit::level(ui.ctx(), title) != crate::ribbon_fit::COLLAPSED {
+        return group(ui, title, launcher, app, add);
+    }
+    let shown_title = tl!(title);
+    let t = Tokens::get(ui.ctx());
+    let start = ui.cursor().min;
+    let position = crate::ribbon_fit::position(ui.ctx());
+    let inner = ui.allocate_ui_with_layout(vec2(MINI_W, CONTENT_H), egui::Layout::top_down(egui::Align::Min), |ui| {
+        ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+        ui.set_min_width(MINI_W);
+        narrow(ui, app);
+    });
+    let x1 = inner.response.rect.max.x.max(start.x + MINI_W);
+    // The ▼ under the column: the rest of the group.
+    let more = Rect::from_min_max(pos2(start.x, start.y + CONTENT_H), pos2(x1, start.y + CONTENT_H + LABEL_H));
+    let open_id = collapsed_open_id(ui, title, position);
+    let was_open = ui.data(|d| d.get_temp::<bool>(open_id)).unwrap_or(false);
+    let resp = ui.interact(more, ui.id().with(("group_more", title, position)), Sense::click());
+    bg(ui, more.shrink2(vec2(1.0, 1.0)), &resp, was_open, &t);
+    icons::paint(ui.painter(), Rect::from_center_size(more.center(), vec2(DROPDOWN + 2.0, DROPDOWN + 2.0)), "dropdown", t.icon, t.icon);
+    let resp = resp.on_hover_text(shown_title);
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, shown_title));
+    group_drop_down(ui, &resp, open_id, was_open, title, shown_title, launcher, app, add);
+    ui.add_space(5.0);
+    let x = ui.cursor().min.x;
+    ui.painter().line_segment([pos2(x, start.y + 4.0), pos2(x, start.y + CONTENT_H + LABEL_H - 4.0)], Stroke::new(1.0, t.border));
+    ui.add_space(6.0);
+    crate::ribbon_fit::record(ui.ctx(), title, crate::ribbon_fit::COLLAPSED, ui.cursor().min.x - start.x);
+}
+
+/// Width of a [`mini`] button.
+pub const MINI_W: f32 = 28.0;
+/// Height of a [`mini`] button: four fill the ribbon's content height.
+pub const MINI_H: f32 = CONTENT_H / 4.0;
+
+/// A button of a folded group's column ([`group_narrow`]): its icon only, the name in the tooltip.
+pub fn mini(ui: &mut Ui, app: &mut WordApp, icon: &str, tip: &str, id: &str, params: Value, checked: bool) -> Response {
+    small_sized(ui, app, icon, None, tip, id, params, checked, vec2(MINI_W, MINI_H), 15.0)
 }
 
 /// The icon a collapsed group's button shows.

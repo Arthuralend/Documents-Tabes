@@ -145,14 +145,14 @@ jobs:
         run: |
           ls -la dl
           mkdir -p rel
-          cp dl/Lexicon-*.apk rel/Lusoft-Documents.apk
-          cp dl/Lexicon-*-windows-x64.msi rel/Lusoft-Documents-Windows.msi
-          cp dl/Lexicon-*-windows-x64-portable.zip rel/Lusoft-Documents-Windows-portable.zip
-          cp dl/Lexicon-*-macos-universal.dmg rel/Lusoft-Documents-macOS.dmg
-          notes="Документы и Таблицы (Lusoft) $NAME.
-          - Android 8.0+ (arm64): Lusoft-Documents.apk
-          - Windows 10/11 (x64): Lusoft-Documents-Windows.msi (installer) or Lusoft-Documents-Windows-portable.zip (no install)
-          - macOS 11+ (Apple silicon and Intel): Lusoft-Documents-macOS.dmg
+          cp dl/Lexicon-*.apk rel/FondOffice-Documents.apk
+          cp dl/Lexicon-*-windows-x64.msi rel/FondOffice-Documents-Windows.msi
+          cp dl/Lexicon-*-windows-x64-portable.zip rel/FondOffice-Documents-Windows-portable.zip
+          cp dl/Lexicon-*-macos-universal.dmg rel/FondOffice-Documents-macOS.dmg
+          notes="FondOffice Документы и таблицы (FondSoftware) $NAME.
+          - Android 8.0+ (arm64): FondOffice-Documents.apk
+          - Windows 10/11 (x64): FondOffice-Documents-Windows.msi (installer) or FondOffice-Documents-Windows-portable.zip (no install)
+          - macOS 11+ (Apple silicon and Intel): FondOffice-Documents-macOS.dmg
           The builds are not signed by Apple or Microsoft: Windows SmartScreen and macOS Gatekeeper warn on first launch (see README)."
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             gh release create "$GITHUB_REF_NAME" rel/* --title "Документы и Таблицы $GITHUB_REF_NAME" --notes "$notes"

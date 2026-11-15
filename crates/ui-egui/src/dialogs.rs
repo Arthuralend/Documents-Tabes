@@ -19,6 +19,9 @@ use crate::WordApp;
 use crate::options::MeasureExt;
 use crate::theme::{Tokens, semibold};
 
+/// The suite Документы belongs to (with Таблицы): a brand name, never translated.
+pub const SUITE_NAME: &str = "FondOffice Документы и таблицы";
+
 /// The Find and Replace dialog's search options beyond the first row (#543).
 #[derive(Clone, Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -2675,14 +2678,16 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             {
                 {
                     ui.label(egui::RichText::new(tl!("Документы")).font(semibold(22.0)));
+                    // The suite's name, a brand: the same in every language.
+                    ui.label(egui::RichText::new(SUITE_NAME).weak());
                     let build = option_env!("WORDCRAFT_BUILD_SHA").map(|s| s.get(..8).unwrap_or(s)).unwrap_or(tl!("development build"));
                     ui.label(crate::i18n::fmt(tl!("Version {version} ({build})"), &[("version", env!("CARGO_PKG_VERSION")), ("build", build)]));
                     ui.label(tl!("A free, open-source word processor with spelling in Russian, English, Armenian, Georgian and Azerbaijani."));
                     ui.add_space(6.0);
-                    ui.hyperlink_to(tl!("Source code: github.com/Arthuralend/Lexicon"), "https://github.com/Arthuralend/Lexicon");
+                    ui.hyperlink_to(tl!("Source code: github.com/Arthuralend/Documents-Tabes"), "https://github.com/Arthuralend/Documents-Tabes");
                     ui.add_space(6.0);
                     // The licence texts, with their copyright notices, ship with the app.
-                    ui.label(tl!("Developer: Lusoft"));
+                    ui.label(tl!("Developer: FondSoftware"));
                     ui.label(egui::RichText::new(tl!("Free software under the MIT or Apache-2.0 licence.")).small().weak());
                 }
             }

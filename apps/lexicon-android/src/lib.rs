@@ -50,7 +50,7 @@ fn android_main(app: AndroidApp) {
             session.system_region = region;
             // New documents start with a 1 cm first-line indent.
             session.new_first_line_indent = Some(wordcraft_engine::NEW_FIRST_LINE_INDENT);
-            wordcraft_engine::set_first_line_indent(&mut session.doc, wordcraft_engine::NEW_FIRST_LINE_INDENT);
+            wordcraft_engine::set_new_document_defaults(&mut session.doc, wordcraft_engine::NEW_FIRST_LINE_INDENT);
             let mut app = WordApp::new(session, services(&android));
             let stored = settings.as_deref().and_then(|dir| std::fs::read(dir.join("ui.json")).ok());
             if let Some(ui) = stored.as_deref().and_then(UiState::from_json) {
@@ -182,10 +182,6 @@ impl eframe::App for Shell {
         self.keyboard.fix_hardware_text(&mut raw.events);
         keyboard::add_paste(&self.android, &mut raw.events);
         raw.events.extend(keyboard::take_events());
-        // The Office Pro Max Sheets icon: show Calculations.
-        if keyboard::take_sheets_request(&self.android) {
-            self.app.start_in_calculations();
-        }
         self.app.raw_input_hook(raw);
     }
 

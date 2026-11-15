@@ -163,7 +163,7 @@ pub fn insert_button(ui: &mut Ui, app: &mut WordApp) {
     }
     crate::icons::paint(
         ui.painter(),
-        Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(32.0, 32.0)),
+        Rect::from_center_size(pos2(r.center().x, r.min.y + BIG_ICON_Y), vec2(crate::widgets::BIG_ICON, crate::widgets::BIG_ICON)),
         "equation",
         t.icon,
         t.accent,

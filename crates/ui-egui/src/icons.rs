@@ -117,13 +117,23 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
     match name {
         // Clipboard
         "paste" => {
-            // A clipboard with a sheet laid on it.
-            pen.rrect(3.5, 3.5, 14.5, 17.5, 2.0, c);
-            pen.frrect(6.5, 2.0, 11.5, 5.0, 1.2, a);
-            pen.frrect(9.0, 8.5, 17.5, 18.5, 1.6, Pen::tint(a));
-            pen.rrect(9.0, 8.5, 17.5, 18.5, 1.6, a);
-            pen.line_c(&[(11.5, 12.0), (15.0, 12.0)], a);
-            pen.line_c(&[(11.5, 15.0), (14.0, 15.0)], a);
+            // A warm clipboard board with its clip, and a written page with a folded corner laid
+            // over it (Документы' own drawing).
+            let board = Color32::from_rgb(0xC9, 0x8B, 0x5A);
+            pen.frrect(2.5, 3.5, 14.0, 18.0, 2.2, board.linear_multiply(0.38));
+            pen.rrect(2.5, 3.5, 14.0, 18.0, 2.2, c);
+            // The clip: a rounded bar with a ring on top.
+            pen.frrect(5.2, 2.2, 11.3, 5.6, 1.4, c);
+            pen.circle(8.25, 1.9, 1.0, c);
+            // The page.
+            let paper = Color32::from_rgb(0xFF, 0xFC, 0xF6);
+            let sheet = [(8.5, 7.5), (14.2, 7.5), (17.8, 11.1), (17.8, 18.8), (8.5, 18.8)];
+            pen.fill(&sheet, paper);
+            pen.fill(&sheet, Pen::tint(a));
+            pen.closed(&sheet, a);
+            pen.line_c(&[(14.2, 7.5), (14.2, 11.1), (17.8, 11.1)], a);
+            pen.line_c(&[(10.8, 13.6), (15.4, 13.6)], c);
+            pen.line_c(&[(10.8, 16.2), (14.0, 16.2)], c);
         }
         "cut" => {
             pen.circle(6.0, 15.0, 2.6, c);

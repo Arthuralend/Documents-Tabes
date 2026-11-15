@@ -26,7 +26,7 @@ fn interface_size_applies_persists_and_clamps() {
     assert_eq!(saved.interface_scale, 125);
 
     // Hostile and missing values: clamped or refused, never applied raw.
-    assert_eq!(h.state_mut().run("view.interfaceScale", json!({"percent": 1e12})).unwrap()["percent"], 200);
+    assert_eq!(h.state_mut().run("view.interfaceScale", json!({"percent": 1e12})).unwrap()["percent"], gridcraft_ui_egui::INTERFACE_SCALE_MAX);
     assert_eq!(h.state_mut().run("view.interfaceScale", json!({"percent": -5})).unwrap()["percent"], 75);
     assert!(h.state_mut().run("view.interfaceScale", json!({})).is_err(), "no value is an error, not a dialog");
     assert!(h.state_mut().run("view.interfaceScale", json!({"percent": "huge"})).is_err());
@@ -39,5 +39,5 @@ fn interface_size_applies_persists_and_clamps() {
     assert!(ui.dark);
     assert_eq!(ui.interface_scale, 100);
     let ui: UiState = serde_json::from_str(r#"{"interfaceScale": 900}"#).unwrap();
-    assert_eq!(ui.interface_scale, 200);
+    assert_eq!(ui.interface_scale, gridcraft_ui_egui::INTERFACE_SCALE_MAX);
 }

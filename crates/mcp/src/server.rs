@@ -133,9 +133,9 @@ impl Server {
                 Ok(json!({
                     "protocolVersion": version,
                     "capabilities": {"tools": {}, "resources": {}},
-                    "serverInfo": {"name": "wordcraft", "title": "Lexicon", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": "https://github.com/Arthuralend/Lexicon"},
+                    "serverInfo": {"name": "wordcraft", "title": "Документы", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": "https://github.com/Arthuralend/Documents-Tabes"},
                     "instructions": format!(
-                        "{INSTRUCTIONS} Backend: {}. Source: https://github.com/Arthuralend/Lexicon",
+                        "{INSTRUCTIONS} Backend: {}. Source: https://github.com/Arthuralend/Documents-Tabes",
                         self.backend.describe()
                     ),
                 }))

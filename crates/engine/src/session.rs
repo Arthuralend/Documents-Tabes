@@ -650,7 +650,7 @@ impl Session {
             goal_x: None,
             page_hint: 0,
             registry: Arc::new(crate::cmd::registry()),
-            author: "Lusoft User".into(),
+            author: "FondSoftware User".into(),
             initials: String::new(),
             painter: None,
             status: String::new(),
@@ -1104,7 +1104,7 @@ impl Session {
     pub fn blank_document(&self) -> Document {
         let mut d = blank_document(&self.region());
         if let Some(indent) = self.new_first_line_indent {
-            set_first_line_indent(&mut d, indent);
+            set_new_document_defaults(&mut d, indent);
         }
         d
     }
@@ -1523,6 +1523,16 @@ pub fn set_first_line_indent(d: &mut Document, indent: f32) {
             p.touch();
         }
     }
+}
+
+/// Документы: the right margin of new documents, 1.5 cm in points.
+pub const NEW_RIGHT_MARGIN: f32 = 1.5 * wordcraft_geom::PT_PER_CM;
+
+/// Документы: a new document's own defaults: the first-line `indent` (points) and the
+/// 1.5 cm right margin ([`NEW_RIGHT_MARGIN`]) of its one section.
+pub fn set_new_document_defaults(d: &mut Document, indent: f32) {
+    set_first_line_indent(d, indent);
+    d.last_section.margin_right = NEW_RIGHT_MARGIN;
 }
 
 /// A new blank document on `region`'s paper (see [`Session::blank_document`]).

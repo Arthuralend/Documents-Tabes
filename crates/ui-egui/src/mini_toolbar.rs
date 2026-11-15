@@ -25,8 +25,8 @@ const ROW_GAP: f32 = 2.0;
 const SPACING: f32 = 1.0;
 /// The ribbon's widget metrics: a small icon button, a split button (icon part plus its 11 pt
 /// arrow, two allocations), a group divider and the size box.
-const BTN_W: f32 = 24.0;
-const SPLIT_W: f32 = 24.0 + SPACING + 11.0;
+const BTN_W: f32 = widgets::SMALL_W;
+const SPLIT_W: f32 = widgets::SMALL_W + SPACING + 11.0;
 const SEP_W: f32 = 9.0;
 const COMBO_SIZE_W: f32 = 52.0;
 /// Gap between the size box and the grow/shrink buttons.

@@ -178,12 +178,7 @@ fn tree() -> Vec<(&'static str, Vec<Entry>)> {
                 ("-", "", None),
             ],
         ),
-        (
-            "Help",
-            vec![
-                ("About Таблицы", "dialog:about", None),
-            ],
-        ),
+        ("Help", vec![("About Таблицы", "dialog:about", None)]),
     ]
 }
 

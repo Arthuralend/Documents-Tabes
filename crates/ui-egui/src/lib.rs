@@ -25,7 +25,6 @@ pub mod a11y_pane;
 pub mod async_saves;
 pub mod autoscroll;
 pub mod backstage;
-pub mod calc;
 pub mod canvas;
 pub mod caret_glide;
 pub mod chrome;
@@ -597,8 +596,6 @@ pub struct WordApp {
     comment_fonts_for: Option<(u64, u64)>,
     /// Whether the Armenian and Georgian interface fallbacks were looked up ([`Self::ensure_script_fonts`]).
     script_fonts_done: bool,
-    /// Lexicon: the Calculations tab's sheet.
-    pub(crate) calc: calc::Workbook,
     /// Lexicon: Home › Dictate.
     pub(crate) dictation: dictation::DictationState,
     /// Lookups [`Self::ensure_script_fonts`] has made.
@@ -736,7 +733,6 @@ impl WordApp {
             want_system_cjk: false,
             comment_fonts_for: None,
             script_fonts_done: false,
-            calc: Default::default(),
             dictation: Default::default(),
             script_font_tries: 0,
             want_script_fonts: false,
@@ -809,14 +805,6 @@ impl WordApp {
     pub fn document_in_use(&self) -> bool {
         self.has_document()
             && (self.session.path.is_some() || self.session.dirty || !self.session.doc.plain_text(wordcraft_doc::StoryRef::Body).trim().is_empty())
-    }
-
-    /// Documents launched as the sheets app: open on the Calculations tab, with the sheet in front.
-    pub fn start_in_calculations(&mut self) {
-        self.ui.tab = "Calculations".into();
-        self.ui.backstage = false;
-        // A blank document stands behind the sheet (no Start screen).
-        self.no_document = None;
     }
 
     /// Whether a document is open: false from a Start screen launch until the user creates or
@@ -919,17 +907,6 @@ impl WordApp {
     /// Close, Envelopes, Labels and Finish & Merge on a document with unsaved changes first ask
     /// Save / Don't Save / Cancel, and the command runs once that is answered (`ui.saveChanges`).
     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
-        // Lexicon: a workbook (Finder, Open With, the Open dialog, the command line) opens in
-        // Calculations, not as a document.
-        if id == "file.open"
-            && let Some(path) = params.get("path").and_then(Value::as_str).filter(|p| calc::is_spreadsheet(p)).map(str::to_string)
-        {
-            let r = calc::open_path(self, &path);
-            if let Err(e) = &r {
-                self.status(e.clone());
-            }
-            return r;
-        }
         // Документы: a file opens once, as in Word: the window that has it comes forward.
         if id == "file.open"
             && let Some(path) = params.get("path").and_then(Value::as_str)
@@ -1592,9 +1569,6 @@ impl WordApp {
     /// Commands that live in the UI layer.
     fn ui_command(&mut self, id: &str, p: &Value) -> Option<Result<Value, String>> {
         let s = |k: &str| p.get(k).and_then(Value::as_str);
-        if id.starts_with("ui.calc.") {
-            return Some(calc::command(self, id, p));
-        }
         Some(Ok(match id {
             "ui.tab" => {
                 let tab = s("tab").unwrap_or("Home").to_string();
@@ -2399,17 +2373,10 @@ impl WordApp {
             if !self.session.view.focus_mode {
                 ribbon::show(self, ui);
                 chrome::status_bar(self, ui);
-                if !calc::active(self) {
-                    panes::show(self, ui);
-                }
+                panes::show(self, ui);
             }
-            // Lexicon: the Calculations tab shows its sheet in place of the page.
             egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.canvas)).show(ui, |ui| {
-                if calc::active(self) {
-                    calc::show(self, ui);
-                } else {
-                    canvas::show(self, ui);
-                }
+                canvas::show(self, ui);
             });
         }
         content_controls::popup(self, &ctx);

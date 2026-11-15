@@ -396,12 +396,6 @@ fn main() -> eframe::Result {
     let mut control_port: Option<u16> = std::env::var("WORDCRAFT_CONTROL_PORT").ok().and_then(|p| p.parse().ok());
     let mut files = Vec::new();
     let mut sample = false;
-    // Office Pro Max Sheets (the same program under another name: `Sheets` in the macOS app,
-    // `--calc` from its Windows shortcut) starts in Calculations.
-    let mut sheets = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.file_stem().map(|s| s.to_string_lossy().to_ascii_lowercase()))
-        .is_some_and(|s| s.contains("sheets"));
     let (args, other_files) = text_args();
     let mut bad_control: Option<Option<String>> = None;
     let mut args = args.into_iter().peekable();
@@ -416,8 +410,8 @@ fn main() -> eframe::Result {
                 }
             }
             "--sample" => sample = true,
-            // Office Pro Max Sheets: start in Calculations.
-            "--calc" => sheets = true,
+            // Older Windows shortcuts started the removed Calculations tab: open as usual.
+            "--calc" => {}
             "--version" => {
                 println!("wordcraft {} ({})", env!("CARGO_PKG_VERSION"), build_sha());
                 return Ok(());
@@ -505,10 +499,10 @@ fn main() -> eframe::Result {
             let (file_dialog, dialogs) = file_dialogs::hook(&cc.egui_ctx);
             let mut session = Session::new(doc);
             session.system_region = region;
-            // Lexicon: new documents start with a 1 cm first-line indent.
+            // Документы: new documents start with a 1 cm first-line indent and a 1.5 cm right margin.
             session.new_first_line_indent = Some(wordcraft_engine::NEW_FIRST_LINE_INDENT);
             if !sample {
-                wordcraft_engine::set_first_line_indent(&mut session.doc, wordcraft_engine::NEW_FIRST_LINE_INDENT);
+                wordcraft_engine::set_new_document_defaults(&mut session.doc, wordcraft_engine::NEW_FIRST_LINE_INDENT);
             }
             let mut app = WordApp::new(session, services(file_dialog, &cc.egui_ctx));
             load_prefs(&mut app);
@@ -545,14 +539,10 @@ fn main() -> eframe::Result {
             // Nothing to open (no files, no sample, no control channel driving the editor): start
             // on File › Home, as Word does (#766), unless the Start screen option is off. Files
             // macOS hands over later open on top of it and close it (`apple_events`).
-            if sheets {
-                app.start_in_calculations();
-            } else {
-                // The documents app opens on the page even when the sheet was last in front.
-                if app.ui.tab == "Calculations" {
-                    app.ui.tab = "Home".into();
-                }
-                // Документы opens on a new document, never the Start screen.
+            // Документы opens on a new document, never the Start screen; a tab stored by an
+            // older version (the removed Calculations) gives way to Home.
+            if app.ui.tab == "Calculations" {
+                app.ui.tab = "Home".into();
             }
             for f in files {
                 if let Err(e) = app.run("file.open", serde_json::json!({"path": f})) {

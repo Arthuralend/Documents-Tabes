@@ -2551,7 +2551,7 @@ fn set_author_refuses_blank_names_and_clamps_long_ones() {
     let mut s = s();
     for bad in [json!(null), json!({}), json!({"name": 5}), json!({"name": ""}), json!({"name": " \t\n "}), json!({"name": "\u{0}\u{7}"})] {
         assert!(s.run("file.setAuthor", &bad).is_err(), "{bad} should be refused");
-        assert_eq!(s.author, "Lusoft User", "a refused name leaves the author alone");
+        assert_eq!(s.author, "FondSoftware User", "a refused name leaves the author alone");
     }
     run(&mut s, "file.setAuthor", json!({"name": "Ada\u{0}\u{1b} Lovelace"}));
     assert_eq!(s.author, "Ada Lovelace", "control characters can't reach the saved XML");
@@ -8507,6 +8507,9 @@ fn new_documents_take_the_apps_first_line_indent() {
         let p = s.doc.para(StoryRef::Body, &path).unwrap();
         assert!((p.props.indent_first.unwrap_or(0.0) - 28.3465).abs() < 0.01, "{:?}", p.props.indent_first);
     }
+    // Документы: the right margin is 1.5 cm; the others stay Word's.
+    assert!((s.doc.last_section.margin_right - 42.52).abs() < 0.01, "{}", s.doc.last_section.margin_right);
+    assert_eq!(s.doc.last_section.margin_left, wordcraft_doc::section::SectionProps::default().margin_left);
 }
 
 /// Lexicon: a table with a picture copied in one window of the app pastes whole in another (each

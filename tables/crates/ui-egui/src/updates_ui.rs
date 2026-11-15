@@ -26,7 +26,7 @@ impl Default for Runtime {
 
 /// Ask for a check; the next frame's `tick` starts it. A manual one reports every outcome.
 pub(crate) fn start(app: &mut SheetApp, manual: bool) {
-    // Lusoft's Таблицы updates with Документы, never from GridCraft's releases.
+    // FondSoftware's Таблицы updates with Документы, never from GridCraft's releases.
     if UPDATES_OFF {
         let _ = (app, manual);
         return;

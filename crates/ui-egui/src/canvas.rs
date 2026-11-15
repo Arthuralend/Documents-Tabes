@@ -2695,7 +2695,8 @@ fn rulers(app: &mut WordApp, ui: &mut Ui, h: Rect, v: Rect, rects: &[Rect], layo
         crate::table_ruler::columns(app, ui, layout, pi, bar, x0, scale);
         // Indents snap to the ruler's own marks: an eighth of a centimetre with metric units (so
         // 1 cm is reachable), a sixteenth of an inch with inches.
-        let snap = |pt: f32| if step > 0.0 { (pt / step).round() * step } else { pt };
+        let free = ui.input(|i| i.modifiers.alt);
+        let snap = |pt: f32| if step > 0.0 && !free { (pt / step).round() * step } else { pt };
         // Dragging the left-indent marker.
         let id = ui.id().with("ruler_left");
         let mr = Rect::from_center_size(pos2(left, bar.max.y - 3.0), vec2(12.0, 12.0));
@@ -2930,7 +2931,31 @@ const MIN_TEXT: f32 = 72.0;
 /// The margin (points) after dragging `edge` of the text area on a ruler to `at` points from the
 /// page's left (or top) edge: snapped to 1/16 inch, never negative, and leaving at least an inch
 /// of text between it and the opposite margin.
+#[cfg(test)]
 pub(crate) fn dragged_margin(edge: MarginEdge, at: f32, s: &wordcraft_doc::section::SectionProps) -> f32 {
+    dragged_margin_step(edge, at, s, INCH_SIXTEENTH)
+}
+
+/// A sixteenth of an inch, in points: the margin step with inches.
+const INCH_SIXTEENTH: f32 = 4.5;
+
+/// The step a dragged margin snaps to in `unit` (Документы): a millimetre with centimetres or
+/// millimetres, so 1.5 cm or 2.3 cm is set exactly; a point with points and picas; a sixteenth of
+/// an inch with inches. Alt held while dragging snaps to nothing.
+pub(crate) fn margin_step(unit: wordcraft_geom::Unit, free: bool) -> f32 {
+    use wordcraft_geom::Unit;
+    if free {
+        return 0.0;
+    }
+    match unit {
+        Unit::Centimeters | Unit::Millimeters => wordcraft_geom::PT_PER_CM / 10.0,
+        Unit::Points | Unit::Picas => 1.0,
+        Unit::Inches => INCH_SIXTEENTH,
+    }
+}
+
+/// [`dragged_margin`] snapped to `step` points (0 = not snapped).
+pub(crate) fn dragged_margin_step(edge: MarginEdge, at: f32, s: &wordcraft_doc::section::SectionProps, step: f32) -> f32 {
     let (raw, room, cur) = match edge {
         MarginEdge::Left => (at - s.gutter, s.page_w - s.margin_right - s.gutter - MIN_TEXT, s.margin_left),
         MarginEdge::Right => (s.page_w - at, s.page_w - s.margin_left - s.gutter - MIN_TEXT, s.margin_right),
@@ -2940,20 +2965,27 @@ pub(crate) fn dragged_margin(edge: MarginEdge, at: f32, s: &wordcraft_doc::secti
     if !raw.is_finite() || !room.is_finite() {
         return cur;
     }
-    ((raw / 4.5).round() * 4.5).clamp(0.0, room.max(0.0))
+    let snapped = if step.is_finite() && step > 0.0 { (raw / step).round() * step } else { raw };
+    snapped.clamp(0.0, room.max(0.0))
 }
 
 /// The stored margin a drag of the visible `edge` to `at` points edits, and its new value. On an
 /// even page of a mirrored layout (`mirrored`) the text area is the odd page's reflected, so the
 /// visible left edge is the stored right margin and the other way round: the pointer is reflected
 /// across the page and the edge swapped (#2914). Top and bottom are the same on every page.
+#[cfg(test)]
 pub(crate) fn margin_drag(edge: MarginEdge, at: f32, s: &wordcraft_doc::section::SectionProps, mirrored: bool) -> (MarginEdge, f32) {
+    margin_drag_step(edge, at, s, mirrored, INCH_SIXTEENTH)
+}
+
+/// [`margin_drag`] snapped to `step` points ([`margin_step`]).
+pub(crate) fn margin_drag_step(edge: MarginEdge, at: f32, s: &wordcraft_doc::section::SectionProps, mirrored: bool, step: f32) -> (MarginEdge, f32) {
     let (edge, at) = match edge {
         MarginEdge::Left if mirrored => (MarginEdge::Right, s.page_w - at),
         MarginEdge::Right if mirrored => (MarginEdge::Left, s.page_w - at),
         e => (e, at),
     };
-    (edge, dragged_margin(edge, at, s))
+    (edge, dragged_margin_step(edge, at, s, step))
 }
 
 /// A draggable margin edge on a ruler: `to_pt` turns the pointer into points from the page's
@@ -2970,16 +3002,31 @@ fn margin_handle(
 ) {
     let cursor =
         if matches!(edge, MarginEdge::Left | MarginEdge::Right) { egui::CursorIcon::ResizeHorizontal } else { egui::CursorIcon::ResizeVertical };
-    let r = ui.interact(zone, ui.id().with(("ruler_margin", edge)), Sense::drag()).on_hover_cursor(cursor);
+    let r = ui.interact(zone, ui.id().with(("ruler_margin", edge)), Sense::click_and_drag()).on_hover_cursor(cursor);
     let r = if r.dragged() { r } else { r.on_hover_text(tl!(edge.label())) };
     if r.dragged()
         && let Some(pp) = r.interact_pointer_pos()
     {
-        let (stored, v) = margin_drag(edge, to_pt(pp), sect, mirrored);
+        // Документы: a millimetre at a time (Alt: anywhere), and the margin shown while it moves.
+        let step = margin_step(app.session.units(), ui.input(|i| i.modifiers.alt));
+        let (stored, v) = margin_drag_step(edge, to_pt(pp), sect, mirrored, step);
         if !r.drag_started() {
             app.session.join_next_undo();
         }
         let _ = app.run("layout.margins", json!({ stored.param(): v }));
+        let t = Tokens::get(ui.ctx());
+        let text = format!("{}: {}", tl!(edge.label()), app.session.format_length(v));
+        let at = pp + vec2(14.0, 14.0);
+        let layer = egui::LayerId::new(egui::Order::Tooltip, ui.id().with(("ruler_margin_value", edge)));
+        let painter = ui.ctx().layer_painter(layer);
+        let galley = painter.layout_no_wrap(text, crate::theme::regular(12.0), t.text);
+        let bubble = Rect::from_min_size(at, galley.size() + vec2(12.0, 8.0));
+        painter.rect(bubble, 4.0, t.ribbon, Stroke::new(1.0, t.border), egui::StrokeKind::Inside);
+        painter.galley(at + vec2(6.0, 4.0), galley, t.text);
+    }
+    // A double click sets the margins exactly in Page Setup, as in Word.
+    if r.double_clicked() {
+        let _ = app.run("layout.pageSetup", json!({}));
     }
 }
 
@@ -3661,6 +3708,20 @@ mod tests {
 
     /// #167: dragging a ruler's margin edge sets that margin, snapped, never negative, and
     /// always leaving an inch of text.
+    #[test]
+    fn metric_margin_drags_snap_to_a_millimetre() {
+        let s = wordcraft_doc::section::SectionProps { page_w: 595.0, page_h: 842.0, margin_left: 72.0, margin_right: 72.0, ..Default::default() };
+        let mm = margin_step(wordcraft_geom::Unit::Centimeters, false);
+        // 1.5 cm from the right edge is exactly 1.5 cm, not the nearest sixteenth of an inch.
+        let cm15 = 1.5 * wordcraft_geom::PT_PER_CM;
+        let v = dragged_margin_step(MarginEdge::Right, 595.0 - cm15 - 0.6, &s, mm);
+        assert!((v - cm15).abs() < 0.001, "{v}");
+        // Alt: wherever the pointer is.
+        let v = dragged_margin_step(MarginEdge::Left, 50.3, &s, margin_step(wordcraft_geom::Unit::Centimeters, true));
+        assert!((v - 50.3).abs() < 0.001, "{v}");
+        assert_eq!(margin_step(wordcraft_geom::Unit::Inches, false), 4.5);
+    }
+
     #[test]
     fn margin_drags_are_clamped() {
         let s = wordcraft_doc::section::SectionProps {

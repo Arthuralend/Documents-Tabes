@@ -1,13 +1,14 @@
-<h1 align="center">Документы и Таблицы</h1>
+<h1 align="center">FondOffice Документы и таблицы</h1>
 
 <p align="center">
   <b>Текстовый процессор с проверкой орфографии на русском и английском — для Android, Windows, macOS, Linux и браузера.</b><br>
-  <i>A word processor with Russian and English spelling, for Android, Windows, macOS, Linux and the web.</i>
+  <i>A word processor with Russian and English spelling, for Android, Windows, macOS, Linux and the web.</i><br>
+  Разработчик — <b>FondSoftware</b>. В пакет входят две программы: <b>Документы</b> и <b>Таблицы</b>.
 </p>
 
-Lexicon основан на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом
+«Документы» основаны на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом
 процессоре на Rust с интерфейсом в стиле Word (лента, стили, таблицы, рецензирование, `.docx`).
-Отличия Lexicon:
+Отличия «Документов»:
 
 - **Русская орфография из коробки.** Словарь `ru_RU` (LibreOffice, автор — А. И. Лебедев,
   лицензия BSD) встроен в программу. В WordCraft русский проверялся только при установленном в
@@ -24,12 +25,6 @@ Lexicon основан на [WordCraft](https://github.com/storytold/wordcraft) 
 - **Android-приложение** (APK) с экранной клавиатурой, включая набор с подсказками
   (Gboard, SwiftKey и т. п.). Интерфейс не заходит под строку состояния и экранную клавиатуру;
   раскладку физической клавиатуры можно переключать прямо во время набора.
-- **Расчёты** (последняя вкладка ленты): электронная таблица прямо в Лексиконе — буквы столбцов,
-  номера строк, строка формул, формулы (`=СУММ(B2:B5)`, `СРЗНАЧ`, `МИН`, `МАКС`, `СЧЁТ`,
-  `ОКРУГЛ`, `ЕСЛИ`, проценты), автосумма, сортировка, вставка и удаление строк и столбцов,
-  копирование в буфер таблицей. Открывает `.xlsx`, `.xls`, `.ods`, `.csv`, сохраняет отдельные
-  файлы Excel (`.xlsx`, с формулами) и CSV. Выделение вставляется в документ таблицей Word, а
-  таблица из документа переносится в лист.
 - **Темы оформления:** тёмно-синяя (по умолчанию), «Полночь», чёрная, белая, светло-синяя,
   бордово-бежевая, лесная, лаванда, мята, рассвет, океан, слива, кофе, а также светлая, тёмная и системная
   (Файл › Параметры › Общие).
@@ -37,7 +32,9 @@ Lexicon основан на [WordCraft](https://github.com/storytold/wordcraft) 
   (фреймворк Speech; при первом запуске система спросит разрешение на микрофон и распознавание
   речи), в Windows — голосовой ввод Windows (Win+H открывается сам), на Android — экран
   распознавания речи системы.
-- **Красная строка 1 см** в новых документах; на линейке отступ ставится с шагом 1/8 см.
+- **Красная строка 1 см и правое поле 1,5 см** в новых документах; на линейке отступ ставится с шагом
+  1/8 см, поля — с шагом 1 мм (с нажатой Alt — без шага), значение видно во время перетаскивания,
+  а двойной щелчок по границе поля открывает «Параметры страницы» для точного ввода.
 
 Встроенные словари добавляют к APK около 1,7 МБ (в сжатом виде) и загружаются в память, только когда
 в тексте встречается их язык.
@@ -52,10 +49,10 @@ Lexicon основан на [WordCraft](https://github.com/storytold/wordcraft) 
 
 ## Установка на Android
 
-1. Скачайте APK на телефон по прямой ссылке: **https://github.com/Arthuralend/Lexicon/releases/download/latest/Lusoft-Documents.apk** — там всегда последняя сборка.
-2. Откройте скачанный `Lexicon.apk`. Разрешите установку из
+1. Скачайте APK на телефон по прямой ссылке: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents.apk** — там всегда последняя сборка.
+2. Откройте скачанный `FondOffice-Documents.apk`. Разрешите установку из
    этого источника, когда телефон спросит.
-3. При первом запуске Lexicon попросит доступ к файлам — тогда документы можно открывать и
+3. При первом запуске «Документы» попросят доступ к файлам — тогда документы можно открывать и
    сохранять в папках «Документы» и «Загрузки». Без доступа документы хранятся в папке
    приложения (`Android/data/io.github.arthuralend.lexicon/files`).
 
@@ -64,23 +61,23 @@ Lexicon основан на [WordCraft](https://github.com/storytold/wordcraft) 
 
 ## Установка на Windows
 
-1. Скачайте установщик: **https://github.com/Arthuralend/Lexicon/releases/download/latest/Lusoft-Documents-Windows.msi**
-   (или версию без установки: **https://github.com/Arthuralend/Lexicon/releases/download/latest/Lusoft-Documents-Windows-portable.zip**).
-2. Запустите `Lexicon-Windows.msi`. Если Windows покажет «Система Windows защитила ваш компьютер»,
+1. Скачайте установщик: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-Windows.msi**
+   (или версию без установки: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-Windows-portable.zip**).
+2. Запустите `FondOffice-Documents-Windows.msi`. Если Windows покажет «Система Windows защитила ваш компьютер»,
    нажмите «Подробнее» → «Выполнить в любом случае»: установщик не подписан платным сертификатом.
-3. Lexicon появится в меню «Пуск». Для документов Word его можно выбрать в
-   «Файл › Параметры › Общие › Сделать Lexicon приложением по умолчанию».
+3. «Документы» и «Таблицы» появятся в меню «Пуск». Для документов Word «Документы» можно выбрать в
+   «Файл › Параметры › Общие › Сделать Документы приложением по умолчанию».
 
 Требования: Windows 10 или 11, 64-разрядная.
 
 ## Установка на macOS
 
-1. Скачайте **https://github.com/Arthuralend/Lexicon/releases/download/latest/Lusoft-Documents-macOS.dmg**,
-   откройте его и перетащите Lexicon в «Программы».
+1. Скачайте **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-macOS.dmg**,
+   откройте его и перетащите «Документы» и «Таблицы» в «Программы».
 2. Приложение не заверено Apple, поэтому при первом запуске macOS его не откроет. Откройте
    «Системные настройки › Конфиденциальность и безопасность» и нажмите «Всё равно открыть» рядом
-   с сообщением о Lexicon. Если macOS пишет, что приложение «повреждено», выполните в Терминале:
-   `xattr -dr com.apple.quarantine /Applications/Lexicon.app`
+   с сообщением о программе. Если macOS пишет, что приложение «повреждено», выполните в Терминале:
+   `xattr -dr com.apple.quarantine /Applications/Документы.app /Applications/Таблицы.app`
 
 Требования: macOS 11 (Big Sur) или новее, Apple Silicon или Intel.
 
@@ -122,14 +119,14 @@ APK подписывается ключом `android/app/lexicon.keystore`, ко
 
 ## Лицензия
 
-Lexicon, как и WordCraft, распространяется по лицензии [MIT](LICENSE-MIT) или
+FondOffice Документы и таблицы, как и WordCraft, распространяется по лицензии [MIT](LICENSE-MIT) или
 [Apache-2.0](LICENSE-APACHE) на ваш выбор. Copyright (c) 2026 ArtCraft Team и участники проектов
-WordCraft и Lexicon; обязательные уведомления — в [NOTICE](NOTICE).
+WordCraft и FondOffice (FondSoftware); обязательные уведомления — в [NOTICE](NOTICE).
 
 Встроенные шрифты, словари и прочие ресурсы сохраняют свои лицензии; каждый указан в
 [ATTRIBUTION.md](ATTRIBUTION.md). Русский словарь: Copyright (c) 1997–2008 Alexander I. Lebedev,
 лицензия в [`assets/spelling/README_ru_RU.txt`](assets/spelling/README_ru_RU.txt). Английский
 словарь и переносы — общественное достояние (Moby Hyphenator II, Grady Ward).
 
-Lexicon — независимый проект, не связанный с ArtCraft, Microsoft или Adobe. Логотипы ArtCraft
+FondOffice — независимый проект FondSoftware, не связанный с ArtCraft, Microsoft или Adobe. Логотипы ArtCraft
 из репозитория WordCraft удалены, как того требует их лицензия.

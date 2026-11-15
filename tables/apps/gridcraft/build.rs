@@ -17,7 +17,7 @@ fn main() {
         .set("ProductName", "Таблицы")
         .set("FileDescription", "Таблицы")
         .set("CompanyName", "Learning Machines LLC")
-        .set("LegalCopyright", "Lusoft. MIT OR Apache-2.0.")
+        .set("LegalCopyright", "FondSoftware. MIT OR Apache-2.0.")
         .set("OriginalFilename", "gridcraft.exe")
         .set("InternalName", "gridcraft");
     if let Err(e) = res.compile() {

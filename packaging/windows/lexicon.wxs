@@ -17,8 +17,8 @@
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package
-      Name="Документы и Таблицы"
-      Manufacturer="Lusoft"
+      Name="FondOffice Документы и таблицы"
+      Manufacturer="FondSoftware"
       Version="$(var.Version)"
       UpgradeCode="3E52BC43-4AA9-4BB8-BC17-D11E09949056"
       Scope="perMachine"
@@ -26,7 +26,7 @@
       Language="1033"
       Codepage="1251">
     <!-- 1251: the Cyrillic names (Документы, Таблицы) in the installer's tables. -->
-    <SummaryInformation Description="Документы и Таблицы" Manufacturer="Lusoft" Codepage="1251" />
+    <SummaryInformation Description="FondOffice Документы и таблицы" Manufacturer="FondSoftware" Codepage="1251" />
     <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
          (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
     <MajorUpgrade AllowSameVersionUpgrades="yes"
@@ -37,9 +37,9 @@
     <Icon Id="SheetsIcon.ico" SourceFile="$(var.SheetsIconPath)" />
     <Icon Id="SuiteIcon.ico" SourceFile="$(var.SuiteIconPath)" />
     <Property Id="ARPPRODUCTICON" Value="SuiteIcon.ico" />
-    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Arthuralend/Lexicon" />
-    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/Arthuralend/Lexicon" />
-    <Property Id="ARPHELPLINK" Value="https://github.com/Arthuralend/Lexicon/issues" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Arthuralend/Documents-Tabes" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/Arthuralend/Documents-Tabes" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/Arthuralend/Documents-Tabes/issues" />
 
     <!-- Installer UI (#198): WixUI_Minimal is welcome + license, progress, then a finish page so
          people can see the install worked. Its dialogs and bitmaps are WiX's own

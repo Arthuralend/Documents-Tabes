@@ -49,12 +49,12 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>Lusoft. MIT OR Apache-2.0.</string>
+  <string>FondSoftware. MIT OR Apache-2.0.</string>
 
   <!-- Documents Lexicon opens (system type declarations). -->
   <key>CFBundleDocumentTypes</key>
   <array>
-    <!-- Lexicon: spreadsheets open in Calculations. -->
+    <!-- Таблицы opens spreadsheets. -->
     <dict>
       <key>CFBundleTypeName</key>
       <string>Spreadsheet</string>

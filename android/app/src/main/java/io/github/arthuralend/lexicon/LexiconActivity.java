@@ -76,7 +76,6 @@ public class LexiconActivity extends NativeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        noteLauncher(getIntent());
         input = new KeyboardView(this);
         addContentView(input, new ViewGroup.LayoutParams(1, 1));
         // The native surface covers the whole window, under the status bar, the navigation bar
@@ -255,30 +254,6 @@ public class LexiconActivity extends NativeActivity {
             awaitingFileAccess = false;
             restart();
         }
-    }
-
-    // Office Pro Max Sheets ------------------------------------------------------------------
-
-    /** Set when the Sheets launcher icon started or brought back the app. */
-    private volatile boolean wantSheets;
-
-    private void noteLauncher(Intent intent) {
-        if (intent != null && intent.getComponent() != null && intent.getComponent().getClassName().endsWith("SheetsLauncher")) {
-            wantSheets = true;
-        }
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        noteLauncher(intent);
-    }
-
-    /** Called from Rust each frame: whether to show Calculations (and forget it). */
-    public boolean takeSheetsRequest() {
-        boolean w = wantSheets;
-        wantSheets = false;
-        return w;
     }
 
     // Home › Dictate -------------------------------------------------------------------------

@@ -80,10 +80,6 @@ pub(crate) enum AfterPick {
     ForDialog,
     /// Put the picked document into the Compare dialog (original or revised, #412).
     ComparePath { revised: bool },
-    /// Lexicon: open the picked spreadsheet in Calculations.
-    OpenSheet,
-    /// Lexicon: save the Calculations sheet there (`.xlsx`, or `.csv`).
-    SaveSheet,
 }
 
 /// What to do once Save As has written the document.
@@ -289,22 +285,6 @@ impl WordApp {
             AfterPick::Recipients => {
                 let Some(path) = picked else { return Ok(json!({"cancelled": true})) };
                 self.load_recipients(json!({"path": path}))
-            }
-            AfterPick::OpenSheet => {
-                let Some(path) = picked else { return Ok(json!({"cancelled": true})) };
-                let r = crate::calc::open_path(self, &path);
-                if let Err(e) = &r {
-                    self.status(e.clone());
-                }
-                r
-            }
-            AfterPick::SaveSheet => {
-                let Some(path) = picked else { return Ok(json!({"cancelled": true})) };
-                let r = crate::calc::save_path(self, &path);
-                if let Err(e) = &r {
-                    self.status(e.clone());
-                }
-                r
             }
             AfterPick::ComparePath { revised } => {
                 let Some(path) = picked else { return Ok(json!({"cancelled": true})) };

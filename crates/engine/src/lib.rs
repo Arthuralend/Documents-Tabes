@@ -29,8 +29,8 @@ pub use io::Password;
 pub use keymap::KeyMap;
 pub use ribbon::RibbonLayout;
 pub use session::{
-    CellRange, ColumnBlock, EditSnapshot, FindState, MathEdit, NEW_FIRST_LINE_INDENT, Prefs, Selection, Session, UNDO_LIST_MAX, ViewState,
-    blank_document, set_first_line_indent, set_system_locale,
+    CellRange, ColumnBlock, EditSnapshot, FindState, MathEdit, NEW_FIRST_LINE_INDENT, NEW_RIGHT_MARGIN, Prefs, Selection, Session, UNDO_LIST_MAX,
+    ViewState, blank_document, set_first_line_indent, set_new_document_defaults, set_system_locale,
 };
 pub use wordcraft_doc as doc;
 pub use wordcraft_geom::Region;

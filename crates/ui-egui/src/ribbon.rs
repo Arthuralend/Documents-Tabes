@@ -279,11 +279,10 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
     // Format) may be stored while the selection moved away, and a tab may have been hidden.
     let user_tabs = app.session.ribbon.tabs().into_owned();
     let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
-    // Lexicon: no Developer, Zotero or Help tab; Calculations (a spreadsheet) comes last.
+    // Документы: no Developer, Zotero or Help tab.
     tabs.extend(
         user_tabs.iter().filter(|e| !e.hidden && !matches!(e.name.as_str(), "Developer" | "Zotero" | "Help")).map(|e| (e.name.clone(), e.custom)),
     );
-    tabs.push(("Calculations".to_string(), false));
     for ct in contextual_tabs(&app.session) {
         if ct == "Outlining" {
             tabs.insert(1.min(tabs.len()), (ct.to_string(), false));
@@ -514,7 +513,6 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                         "Developer" => developer(app, ui),
                         "Zotero" => zotero(app, ui),
                         "Help" => help(app, ui),
-                        "Calculations" => crate::calc::tab(app, ui),
                         "Table Design" => table_design(app, ui),
                         "Table Layout" => table_layout(app, ui),
                         "Equation" if app.session.math.is_some() => crate::equation_tab::show(app, ui),
@@ -1075,10 +1073,25 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             });
         });
     });
-    group(ui, "Paragraph", Some("para.dialog"), app, |ui, app| {
+    // The buttons show alignment as seen on the page (Align Right is a right-to-left paragraph's start).
+    let align = app
+        .session
+        .doc
+        .para_at(&app.session.sel.focus)
+        .map(|p| app.session.doc.styles.resolve_para(&p.props))
+        .map(|r| r.align.visual(r.bidi))
+        .unwrap_or_default();
+    // Документы: in a narrow window the four alignments stay, one under another, and ▼ under them
+    // opens the rest of the group.
+    let narrow = |ui: &mut Ui, app: &mut WordApp| {
+        use wordcraft_doc::Align as A;
+        crate::widgets::mini(ui, app, "alignLeft", "Align Left", "para.alignLeft", json!({}), align == A::Left);
+        crate::widgets::mini(ui, app, "alignCenter", "Center", "para.alignCenter", json!({}), align == A::Center);
+        crate::widgets::mini(ui, app, "alignRight", "Align Right", "para.alignRight", json!({}), align == A::Right);
+        crate::widgets::mini(ui, app, "justify", "Justify", "para.justify", json!({}), align == A::Justify);
+    };
+    crate::widgets::group_narrow(ui, "Paragraph", Some("para.dialog"), app, narrow, |ui, app| {
         let rp = app.session.doc.para_at(&app.session.sel.focus).map(|p| app.session.doc.styles.resolve_para(&p.props));
-        // The buttons show alignment as seen on the page (Align Right is a right-to-left paragraph's start).
-        let align = rp.as_ref().map(|r| r.align.visual(r.bidi)).unwrap_or_default();
         let rtl = rp.as_ref().is_some_and(|r| r.bidi);
         let lists = wordcraft_engine::cmd::para::list_buttons(&app.session.doc, rp.as_ref().and_then(|r| r.numbering));
         stack(ui, |ui| {
@@ -1227,11 +1240,18 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             .find(|(c, _)| *c == app.ui.dictation_language)
             .map_or_else(|| tl!("Interface language").to_string(), |(_, n)| (*n).to_string());
         app.want_script_fonts = true;
-        egui::ComboBox::from_id_salt("dictation_language").selected_text(current).width(110.0).show_ui(ui, |ui| {
-            ui.selectable_value(&mut app.ui.dictation_language, String::new(), tl!("Interface language"));
-            for (code, name) in crate::dictation::LANGUAGES {
-                ui.selectable_value(&mut app.ui.dictation_language, code.to_string(), name);
-            }
+        // Документы: the language sits in a column beside the button, its name above the list.
+        ui.vertical(|ui| {
+            ui.add_space(12.0);
+            let t = Tokens::get(ui.ctx());
+            ui.label(egui::RichText::new(tl!("Language")).font(regular(11.0)).color(t.text_dim));
+            ui.add_space(2.0);
+            egui::ComboBox::from_id_salt("dictation_language").selected_text(current).width(118.0).show_ui(ui, |ui| {
+                ui.selectable_value(&mut app.ui.dictation_language, String::new(), tl!("Interface language"));
+                for (code, name) in crate::dictation::LANGUAGES {
+                    ui.selectable_value(&mut app.ui.dictation_language, code.to_string(), name);
+                }
+            });
         });
     });
     // Lexicon: no Editor group on Home (Spelling & Grammar stays on the Review tab and F7).

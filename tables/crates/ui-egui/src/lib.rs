@@ -16,7 +16,6 @@ pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
 };
 
 pub mod backstage;
-pub mod scheme;
 mod border_preview;
 mod cell_pictures;
 pub mod chartview;
@@ -46,6 +45,7 @@ pub mod paper_view;
 pub mod pivot_pane;
 pub mod printing;
 pub mod ribbon;
+pub mod scheme;
 pub mod selection_glide;
 pub mod tabs;
 pub mod text_box;

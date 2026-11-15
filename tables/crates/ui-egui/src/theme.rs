@@ -175,12 +175,17 @@ impl Tokens {
         Tokens::palette(true)
     }
 
-    /// The palette for `dark`, coloured by Документы' scheme when it has that side ([`crate::scheme`]).
+    /// The palette for `dark`, coloured by Документы' scheme when it has that side
+    /// ([`crate::scheme`]); otherwise by Документы' own Ivory (light) or Charcoal (dark), so
+    /// Таблицы always wears the colours of Документы.
     fn palette(dark: bool) -> Tokens {
         let t = Tokens::base(dark);
         match crate::scheme::current() {
             Some(s) if s.dark == dark => t.with_scheme(&s),
-            _ => t,
+            _ => match crate::scheme::house(dark) {
+                Some(s) => t.with_scheme(&s),
+                None => t,
+            },
         }
     }
 
@@ -188,7 +193,9 @@ impl Tokens {
     /// accents. The sheet (white, black text, light gridlines) stays as in Excel.
     fn with_scheme(self, s: &crate::scheme::Scheme) -> Tokens {
         use crate::scheme::rgb;
-        let accent = rgb(s.accent);
+        // The accent also colours text (File, contextual tabs): where the scheme's accent is too
+        // light for that on the window (Ivory's terracotta), its text shade stands in.
+        let accent = if contrast(rgb(s.accent), rgb(s.title)) < 4.5 { rgb(s.accent_text) } else { rgb(s.accent) };
         Tokens {
             window: rgb(s.title),
             ribbon: rgb(s.ribbon),
@@ -268,8 +275,10 @@ impl Tokens {
             on_accent: pick(dark, Color32::WHITE, rgb(0x0F2A1A)),
             cat: pick(
                 dark,
-                [rgb(0x2F6FCF), rgb(0x1E8A4C), rgb(0xC8601A), rgb(0xC8372D), rgb(0x8350C8), rgb(0x13808A), rgb(0x9C6C00), rgb(0x5A6B7D)],
-                [rgb(0x6EA8F7), rgb(0x5CC587), rgb(0xF0965A), rgb(0xF07B6E), rgb(0xB394EE), rgb(0x4CC7CF), rgb(0xF2C14E), rgb(0xA9B6C4)],
+                // Документы' quiet, earthy icon colours (blue, green, orange, red, purple, teal,
+                // amber, slate).
+                [rgb(0x46698A), rgb(0x4F7D53), rgb(0xB8693C), rgb(0xB0453A), rgb(0x765A8C), rgb(0x3F7C78), rgb(0x9A7417), rgb(0x67645E)],
+                [rgb(0x8FB0CF), rgb(0x8DB891), rgb(0xE09A70), rgb(0xE08A7E), rgb(0xB9A0CC), rgb(0x86C2BD), rgb(0xE3C266), rgb(0xB5B2A8)],
             ),
             paper: pick(dark, Color32::WHITE, rgb(0x454545)),
             ref_colors: pick(
