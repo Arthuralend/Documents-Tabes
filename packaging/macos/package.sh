@@ -105,9 +105,10 @@ notarize() {
 # ---- Lexicon.app ----------------------------------------------------------------------------
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-# Executable and icon carry the display name (CFBundleExecutable / CFBundleIconFile).
-cp "$WORK/bin/wordcraft" "$APP/Contents/MacOS/Lexicon"
-cp "$ROOT/assets/app-icon/wordcraft.icns" "$APP/Contents/Resources/Lexicon.icns"
+# The executable carries the app's name (CFBundleExecutable): macOS names the app menu's About,
+# Hide and Quit items after it, so it is Документы (Таблицы), never Lexicon.
+cp "$WORK/bin/wordcraft" "$APP/Contents/MacOS/Документы"
+cp "$ROOT/assets/app-icon/wordcraft.icns" "$APP/Contents/Resources/Documents.icns"
 # Licences of the embedded craft-fonts fonts (only when built with CRAFT_FONTS_DIR).
 copy_font_licences "$APP/Contents/Resources"
 cp "$ROOT/LICENSE-MIT" "$ROOT/LICENSE-APACHE" "$APP/Contents/Resources/"
@@ -127,7 +128,7 @@ printf 'APPL????' >"$APP/Contents/PkgInfo"
 # ---- Таблицы.app: the spreadsheet app ---------------------------------------------------------
 echo "==> assembling $SHEETS"
 mkdir -p "$SHEETS/Contents/MacOS" "$SHEETS/Contents/Resources"
-cp "$WORK/bin/tables" "$SHEETS/Contents/MacOS/Tables"
+cp "$WORK/bin/tables" "$SHEETS/Contents/MacOS/Таблицы"
 cp "$ROOT/assets/app-icon/sheets.icns" "$SHEETS/Contents/Resources/Tables.icns"
 cp "$ROOT/tables/LICENSE-MIT" "$ROOT/tables/LICENSE-APACHE" "$ROOT/tables/NOTICE" "$SHEETS/Contents/Resources/"
 for loc in en ru hy; do
@@ -147,10 +148,10 @@ xattr -cr "$APP"
 xattr -cr "$SHEETS"
 # Sign inside-out: nested code first, then the bundle itself (no --deep on the final signature).
 # Today the only nested code is the main executable; frameworks/helpers would be signed here too.
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Lexicon"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Документы"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS/Contents/MacOS/Tables"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS/Contents/MacOS/Таблицы"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS"
 codesign --verify --strict --deep --verbose=2 "$SHEETS"
 

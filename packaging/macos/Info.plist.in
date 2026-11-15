@@ -11,7 +11,7 @@
   <key>CFBundleName</key>
   <string>Документы</string>
   <key>CFBundleExecutable</key>
-  <string>Lexicon</string>
+  <string>Документы</string>
   <key>CFBundleIdentifier</key>
   <string>io.github.arthuralend.lexicon</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -35,7 +35,7 @@
   <key>LexiconBuildCommit</key>
   <string>@BUILD_SHA@</string>
   <key>CFBundleIconFile</key>
-  <string>Lexicon</string>
+  <string>Documents</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.productivity</string>
   <!-- Must match MACOSX_DEPLOYMENT_TARGET in package.sh. Big Sur is the first release on

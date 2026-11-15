@@ -5,7 +5,7 @@
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
     Lexicon-<version>-windows-<arch>.msi            per-machine installer (WiX v5)
-    Lexicon-<version>-windows-<arch>-portable.zip   Lexicon.exe
+    Lexicon-<version>-windows-<arch>-portable.zip   FondOffice-Documents\Documents.exe, Tables.exe
 
   The binaries link the C runtime statically (+crt-static), so neither the MSI nor the portable
   zip needs the Visual C++ redistributable. Signing is delegated to sign.ps1 (skipped with a
@@ -99,10 +99,10 @@ foreach ($check in @(,@('wordcraft.exe', 2))) {
 $Stage = Join-Path $TargetDir "windows-package\$Arch"
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-Copy-Item (Join-Path $Bin 'wordcraft.exe') (Join-Path $Stage 'Lexicon.exe')
+Copy-Item (Join-Path $Bin 'wordcraft.exe') (Join-Path $Stage 'Documents.exe')
 Copy-Item (Join-Path $TargetDir "tables\$Target\release\gridcraft.exe") (Join-Path $Stage 'Tables.exe')
 
-& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Lexicon.exe')
+& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Documents.exe')
 & (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Tables.exe')
 
 # ---- MSI ---------------------------------------------------------------------------------------
@@ -149,7 +149,8 @@ Remove-Item -Force -ErrorAction SilentlyContinue ([IO.Path]::ChangeExtension($Ms
 & (Join-Path $PSScriptRoot 'sign.ps1') $Msi
 
 # ---- portable zip ------------------------------------------------------------------------------
-$Portable = Join-Path $TargetDir "windows-package\Lexicon-$Version-windows-$Arch-portable"
+# The folder people unpack: FondOffice-Documents with Documents.exe and Tables.exe.
+$Portable = Join-Path $TargetDir "windows-package\FondOffice-Documents"
 Remove-Item -Recurse -Force $Portable -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Portable | Out-Null
 Copy-Item (Join-Path $Stage '*.exe') $Portable

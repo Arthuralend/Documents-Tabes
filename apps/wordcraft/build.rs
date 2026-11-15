@@ -18,8 +18,8 @@ fn main() {
         .set("FileDescription", "Документы — FondSoftware")
         .set("CompanyName", "FondSoftware")
         .set("LegalCopyright", "FondSoftware. Based on WordCraft, MIT OR Apache-2.0.")
-        .set("OriginalFilename", "Lexicon.exe")
-        .set("InternalName", "Lexicon");
+        .set("OriginalFilename", "Documents.exe")
+        .set("InternalName", "Documents");
     if let Err(e) = res.compile() {
         if std::env::var_os("WORDCRAFT_REQUIRE_WINRES").is_some() {
             eprintln!("embedding Windows resources failed: {e}");

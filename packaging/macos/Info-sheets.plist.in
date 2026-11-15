@@ -11,7 +11,7 @@
   <key>CFBundleName</key>
   <string>Таблицы</string>
   <key>CFBundleExecutable</key>
-  <string>Tables</string>
+  <string>Таблицы</string>
   <key>CFBundleIdentifier</key>
   <string>io.github.arthuralend.lexicon.tables</string>
   <key>CFBundleInfoDictionaryVersion</key>

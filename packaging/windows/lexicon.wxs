@@ -59,11 +59,11 @@
     </UI>
 
     <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="INSTALLFOLDER" Name="Lexicon" />
+      <Directory Id="INSTALLFOLDER" Name="FondOffice" />
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder" />
 
-    <Feature Id="Main" Title="Lexicon" Level="1">
+    <Feature Id="Main" Title="FondOffice" Level="1">
       <ComponentGroupRef Id="LexiconFiles" />
     </Feature>
   </Package>
@@ -71,13 +71,13 @@
   <Fragment>
     <ComponentGroup Id="LexiconFiles" Directory="INSTALLFOLDER">
       <Component Id="LexiconApp" Guid="1529CDF3-420E-476C-BE94-8D39629D0439">
-        <File Id="LexiconExe" Source="$(var.BinDir)\Lexicon.exe" KeyPath="yes">
+        <File Id="LexiconExe" Source="$(var.BinDir)\Documents.exe" KeyPath="yes">
           <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Документы"
               Description="Документы" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
               Icon="LexiconIcon.ico" IconIndex="0" />
         </File>
 
-        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\Lexicon.exe" Value="[#LexiconExe]" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\Documents.exe" Value="[#LexiconExe]" Type="string" />
       </Component>
       <!-- Таблицы: the spreadsheet app, with its own Start menu shortcut and icon. -->
       <Component Id="TablesApp" Guid="7C1B3E5A-2F84-4D6B-9A37-5E0C8B21D4F6">
@@ -100,77 +100,77 @@
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities" Name="ApplicationName" Value="Документы" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities" Name="ApplicationDescription" Value="Write and design documents; open and save Word files." Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities" Name="ApplicationIcon" Value="&quot;[#LexiconExe]&quot;,0" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe" Name="FriendlyAppName" Value="Документы" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe" Name="FriendlyAppName" Value="Документы" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
 
         <ProgId Id="Lexicon.Document" Description="Word Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.Document\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.docx\OpenWithProgids" Name="Lexicon.Document" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".docx" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".docx" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".docx" Value="Lexicon.Document" Type="string" />
 
         <ProgId Id="Lexicon.DocumentMacroEnabled" Description="Word Macro-Enabled Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.DocumentMacroEnabled\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.docm\OpenWithProgids" Name="Lexicon.DocumentMacroEnabled" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".docm" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".docm" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".docm" Value="Lexicon.DocumentMacroEnabled" Type="string" />
 
         <ProgId Id="Lexicon.Template" Description="Word Template" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.Template\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.dotx\OpenWithProgids" Name="Lexicon.Template" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".dotx" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".dotx" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".dotx" Value="Lexicon.Template" Type="string" />
 
         <ProgId Id="Lexicon.TemplateMacroEnabled" Description="Word Macro-Enabled Template" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.TemplateMacroEnabled\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.dotm\OpenWithProgids" Name="Lexicon.TemplateMacroEnabled" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".dotm" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".dotm" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".dotm" Value="Lexicon.TemplateMacroEnabled" Type="string" />
 
         <ProgId Id="Lexicon.LegacyDocument" Description="Legacy Word Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.LegacyDocument\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.doc\OpenWithProgids" Name="Lexicon.LegacyDocument" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".doc" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".doc" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".doc" Value="Lexicon.LegacyDocument" Type="string" />
 
         <ProgId Id="Lexicon.LegacyTemplate" Description="Legacy Word Template" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.LegacyTemplate\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.dot\OpenWithProgids" Name="Lexicon.LegacyTemplate" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".dot" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".dot" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".dot" Value="Lexicon.LegacyTemplate" Type="string" />
 
         <ProgId Id="Lexicon.RichText" Description="Rich Text Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.RichText\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.rtf\OpenWithProgids" Name="Lexicon.RichText" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".rtf" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".rtf" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".rtf" Value="Lexicon.RichText" Type="string" />
 
         <ProgId Id="Lexicon.OpenDocumentText" Description="OpenDocument Text" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.OpenDocumentText\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.odt\OpenWithProgids" Name="Lexicon.OpenDocumentText" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".odt" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".odt" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".odt" Value="Lexicon.OpenDocumentText" Type="string" />
 
         <ProgId Id="Lexicon.Markdown" Description="Markdown Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.Markdown\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.md\OpenWithProgids" Name="Lexicon.Markdown" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".md" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".md" Value="" Type="string" />
 
         <ProgId Id="Lexicon.PlainText" Description="Text Document" Icon="LexiconExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.PlainText\shell\open\command" Value="&quot;[#LexiconExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.txt\OpenWithProgids" Name="Lexicon.PlainText" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".txt" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".txt" Value="" Type="string" />
 
         <!-- Lexicon: Excel workbooks open in Calculations. -->
         <ProgId Id="Lexicon.Workbook" Description="Excel Workbook" Icon="TablesExe" IconIndex="0" />
         <RegistryValue Root="HKLM" Key="Software\Classes\Lexicon.Workbook\shell\open\command" Value="&quot;[#TablesExe]&quot; &quot;%1&quot;" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.xlsx\OpenWithProgids" Name="Lexicon.Workbook" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".xlsx" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".xlsx" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Lexicon\Capabilities\FileAssociations" Name=".xlsx" Value="Lexicon.Workbook" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.xls\OpenWithProgids" Name="Lexicon.Workbook" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".xls" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".xls" Value="" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\Classes\.ods\OpenWithProgids" Name="Lexicon.Workbook" Value="" Type="string" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Lexicon.exe\SupportedTypes" Name=".ods" Value="" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\Applications\Documents.exe\SupportedTypes" Name=".ods" Value="" Type="string" />
       </Component>
 
     </ComponentGroup>

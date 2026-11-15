@@ -16,10 +16,10 @@ fn main() {
     res.set_icon("../../assets/app-icon/gridcraft.ico")
         .set("ProductName", "Таблицы")
         .set("FileDescription", "Таблицы")
-        .set("CompanyName", "Learning Machines LLC")
+        .set("CompanyName", "FondSoftware")
         .set("LegalCopyright", "FondSoftware. MIT OR Apache-2.0.")
-        .set("OriginalFilename", "gridcraft.exe")
-        .set("InternalName", "gridcraft");
+        .set("OriginalFilename", "Tables.exe")
+        .set("InternalName", "Tables");
     if let Err(e) = res.compile() {
         if std::env::var_os("GRIDCRAFT_REQUIRE_WINRES").is_some() {
             eprintln!("embedding Windows resources failed: {e}");
