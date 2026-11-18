@@ -67,6 +67,11 @@ fn quick_access(ui: &mut Ui, app: &mut WordApp) {
         if id == "edit.undo" {
             undo_list_button(ui, app, enabled);
         }
+        // Документы: Save as PDF sits right beside Save.
+        if id == "file.save" {
+            let on = app.has_document();
+            qat_button(ui, app, "pdf", tl!("Save as PDF"), "file.exportPdf", on);
+        }
     }
     let t = Tokens::get(ui.ctx());
     let (r, _) = ui.allocate_exact_size(vec2(26.0, 24.0), Sense::hover());

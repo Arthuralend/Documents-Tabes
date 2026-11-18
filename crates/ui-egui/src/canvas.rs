@@ -1460,6 +1460,17 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                 }
             }
         }
+        // Документы: words just dictated glow for a moment, fading out, so it is plain where the
+        // heard text goes.
+        if let Some((a, b, k)) = crate::dictation::trail(app, crate::now_ms()) {
+            for (pi, r) in layout.selection_rects(&app.session.doc, &a, &b, app.session.page_hint) {
+                if let Some(pr) = rects.get(pi) {
+                    let scale = layout.pages.get(pi).map_or(geo.scale, |page| page_screen_scale(*pr, page, geo.scale));
+                    let sr = Rect::from_min_size(pos2(pr.min.x + r.x * scale, pr.min.y + r.y * scale), vec2(r.w * scale, r.h * scale));
+                    painter.rect_filled(sr.expand(1.0), 2.0, t.accent.gamma_multiply(0.28 * k));
+                }
+            }
+        }
         // Caret.
         let focused = resp.has_focus() || app.canvas.focused;
         // After an automatic change, the web's text agent starts afresh (`keys::note_automatic_change`).

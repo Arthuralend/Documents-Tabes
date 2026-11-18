@@ -19,7 +19,7 @@ const PAD_X: f32 = 4.0;
 const PAD_Y: f32 = 3.0;
 /// Height of one row of controls (the ribbon's 22 pt buttons plus a little air), and the gap
 /// between the two rows.
-const ROW_H: f32 = 24.0;
+const ROW_H: f32 = widgets::SMALL_H + 2.0;
 const ROW_GAP: f32 = 2.0;
 /// Horizontal gap between neighbouring controls.
 const SPACING: f32 = 1.0;
@@ -652,12 +652,12 @@ mod tests {
         let mut h = bar_over("brown fox");
         h.state_mut().run("format.highlight", json!({"color": "yellow"})).unwrap();
         steps(&mut h);
-        // The bar's split buttons are Highlight then Font Color; their arrows are 11 × 22.
+        // The bar's split buttons are Highlight then Font Color; their arrows are 11 wide, as tall as a small button.
         let highlight_arrow = |h: &egui_kittest::Harness<'static, WordApp>| {
             let [bar, _] = h.ctx.data(|d| d.get_temp::<[Rect; 2]>(shown_id())).expect("the bar is shown over a selection");
-            h.query_all(
-                By::new().predicate(|n| n.raw_bounds().is_some_and(|r| ((r.x1 - r.x0) - 11.0).abs() < 0.5 && ((r.y1 - r.y0) - 22.0).abs() < 0.5)),
-            )
+            h.query_all(By::new().predicate(|n| {
+                n.raw_bounds().is_some_and(|r| ((r.x1 - r.x0) - 11.0).abs() < 0.5 && ((r.y1 - r.y0) - f64::from(widgets::SMALL_H)).abs() < 0.5)
+            }))
             .map(|n| n.rect())
             .filter(|r| bar.contains_rect(*r))
             .min_by(|a, b| a.min.x.total_cmp(&b.min.x))

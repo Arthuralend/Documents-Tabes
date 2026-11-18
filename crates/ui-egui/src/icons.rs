@@ -135,6 +135,12 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
             pen.line_c(&[(10.8, 13.6), (15.4, 13.6)], c);
             pen.line_c(&[(10.8, 16.2), (14.0, 16.2)], c);
         }
+        // Документы: Save as PDF — a page with a folded corner and a red PDF band.
+        "pdf" => {
+            pen.page(4.0, 2.0, 16.0, 18.0);
+            pen.frrect(2.0, 10.0, 18.0, 16.0, 1.4, red);
+            pen.text(10.0, 13.1, 5.6, "PDF", Color32::WHITE, true);
+        }
         "cut" => {
             pen.circle(6.0, 15.0, 2.6, c);
             pen.circle(14.0, 15.0, 2.6, a);

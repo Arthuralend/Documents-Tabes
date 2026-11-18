@@ -241,6 +241,10 @@ pub fn plan_strip(tabs: &[TabSpec], buttons: [f32; 3], avail: f32, more: f32) ->
     StripPlan { pad, buttons: level, fits, widths }
 }
 
+/// Built-in tabs Документы leaves out of the ribbon (their commands still run from shortcuts,
+/// search and the control channel).
+pub(crate) const HIDDEN_TABS: [&str; 6] = ["Developer", "Zotero", "Help", "References", "Mailings", "Review"];
+
 /// Whether the caret is inside a table (so the contextual tabs and their badges are shown).
 pub fn in_table_public(app: &WordApp) -> bool {
     app.session.sel.focus.path.cell().is_some()
@@ -279,10 +283,9 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
     // Format) may be stored while the selection moved away, and a tab may have been hidden.
     let user_tabs = app.session.ribbon.tabs().into_owned();
     let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
-    // Документы: no Developer, Zotero or Help tab.
-    tabs.extend(
-        user_tabs.iter().filter(|e| !e.hidden && !matches!(e.name.as_str(), "Developer" | "Zotero" | "Help")).map(|e| (e.name.clone(), e.custom)),
-    );
+    // Документы: no Developer, Zotero, Help, References, Mailings or Review tab (reviewing is the
+    // Editing/Reviewing switch at the top right; spelling is F7).
+    tabs.extend(user_tabs.iter().filter(|e| !e.hidden && (e.custom || !HIDDEN_TABS.contains(&e.name.as_str()))).map(|e| (e.name.clone(), e.custom)));
     for ct in contextual_tabs(&app.session) {
         if ct == "Outlining" {
             tabs.insert(1.min(tabs.len()), (ct.to_string(), false));
@@ -305,21 +308,16 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
         .show(ui, |ui| {
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing = vec2(2.0, 0.0);
-                // Share, Editing mode and Comments keep their room; the tabs get what is left of it
-                // (#897, #2026), and the buttons give up their labels before a tab is drawn over them.
-                let share = tl!("Share");
+                // Документы: the Editing/Reviewing switch keeps its room (no Share or Comments
+                // button); the tabs get what is left of it (#897, #2026), and the switch gives up
+                // its label before a tab is drawn over it.
                 let editing_label = if app.session.doc.settings.track_changes { tl!("Reviewing") } else { tl!("Editing") };
-                let comments = tl!("Comments");
-                let share_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(share.to_string(), medium(12.0), t.text).size().x);
                 let spaced = |w: f32| w + 2.0;
                 let button_widths = |level: usize| -> f32 {
                     let labels = level == 0;
-                    let share_full = (share_w + 36.0).max(74.0);
-                    let share_button = if level < 2 { share_full } else { 30.0 };
                     let editing = crate::widgets::icon_text_button_width(ui, editing_label, regular(12.0), true, labels);
-                    let comment = crate::widgets::icon_text_button_width(ui, comments, regular(12.0), false, labels);
-                    // The gaps (6 + 4 + 8) and the strip's margin.
-                    spaced(share_button) + spaced(editing) + spaced(comment) + 18.0 + 12.0
+                    // The gap after it and the strip's margin.
+                    spaced(editing) + 8.0 + 12.0
                 };
                 let button_levels = [button_widths(0), button_widths(1), button_widths(2)];
                 let labels: Vec<&str> = tabs.iter().map(|(tab, custom)| if *custom { tab.as_str() } else { tl!(tab) }).collect();
@@ -339,25 +337,6 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                     if !app.has_document() {
                         ui.disable();
                     }
-                    let (share_size, share_text) = if plan.buttons < 2 { (((share_w + 36.0).max(74.0), 24.0), true) } else { ((30.0, 24.0), false) };
-                    let (r, resp) = ui.allocate_exact_size(vec2(share_size.0, share_size.1), Sense::click());
-                    ui.painter().rect_filled(r, 4.0, if resp.hovered() { t.accent_text } else { t.accent });
-                    let icon_x = if share_text { r.min.x + 14.0 } else { r.center().x };
-                    icons::paint(
-                        ui.painter(),
-                        Rect::from_center_size(pos2(icon_x, r.center().y), vec2(14.0, 14.0)),
-                        "share",
-                        t.on_accent,
-                        t.on_accent,
-                    );
-                    if share_text {
-                        ui.painter().text(pos2(r.min.x + 26.0, r.center().y), Align2::LEFT_CENTER, share, medium(12.0), t.on_accent);
-                    }
-                    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, share));
-                    if resp.on_hover_text(tl!("Export a copy to share (PDF, Word document)")).clicked() {
-                        let _ = app.run("ui.backstage", json!({"value": true, "page": "export"}));
-                    }
-                    ui.add_space(6.0);
                     let track = app.session.doc.settings.track_changes;
                     let mode = if plan.buttons == 0 {
                         crate::widgets::icon_text_menu_button(ui, "pencil", editing_label, regular(12.0))
@@ -374,15 +353,6 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                             ui.close();
                         }
                     });
-                    ui.add_space(4.0);
-                    let comments_button = if plan.buttons == 0 {
-                        crate::widgets::icon_text_button(ui, "comment", comments, regular(12.0))
-                    } else {
-                        crate::widgets::icon_only_button(ui, "comment", comments, regular(12.0), false)
-                    };
-                    if comments_button.clicked() {
-                        let _ = app.run("view.commentsPane", json!({}));
-                    }
                     ui.add_space(8.0);
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         // The tabs that don't fit go into a » menu at the end of the strip (#897, #2026).
@@ -935,7 +905,7 @@ pub(crate) fn wrap_text_items(ui: &mut Ui, app: &mut WordApp) {
 fn format_painter_button(ui: &mut Ui, app: &mut WordApp) {
     let sticky = matches!(app.session.painter, Some((_, _, true)));
     let armed = app.session.painter.is_some();
-    let resp = small(ui, app, "painter", Some("Format"), "Format Painter", "edit.formatPainter", json!({}), sticky);
+    let resp = small(ui, app, "painter", None, "Format Painter", "edit.formatPainter", json!({}), sticky);
     if resp.double_clicked() {
         painter_double_click(app);
     } else if armed && !sticky {
@@ -953,31 +923,38 @@ fn painter_double_click(app: &mut WordApp) {
     let _ = app.run("edit.formatPainter", json!({"sticky": true}));
 }
 
+/// Документы: the two rows of the Font and Paragraph groups sit in the ribbon's height like the
+/// owner's design: this much room above the first row and between the rows.
+const ROW_TOP: f32 = 6.0;
+const ROW_GAP: f32 = 8.0;
+
 fn home(app: &mut WordApp, ui: &mut Ui) {
     let st = app.session.run("format.state", &json!({})).unwrap_or_default();
     let flag = |k: &str| st.get(k).and_then(Value::as_bool).unwrap_or(false);
     group(ui, "Clipboard", Some("edit.clipboardPane"), app, |ui, app| {
-        menu_button(ui, app, "paste", Some("Paste"), "Paste (⌘V)", true, "edit.paste", |ui, app| {
+        crate::widgets::big_split(ui, app, "paste", "Paste", "edit.paste", json!({}), false, |ui, app| {
             mi(ui, app, "Paste", "edit.paste", json!({}));
             mi(ui, app, "Keep Text Only", "edit.pasteText", json!({}));
             mi(ui, app, "Merge Formatting", "edit.pasteMerge", json!({}));
             mi(ui, app, "Paste Special…", "edit.pasteSpecial", json!({}));
         });
+        // Cut, Copy and Format Painter: icons in a column, their names in the tooltips.
         stack(ui, |ui| {
-            small(ui, app, "cut", Some("Cut"), "Cut", "edit.cut", json!({}), false);
-            small(ui, app, "copy", Some("Copy"), "Copy", "edit.copy", json!({}), false);
+            small(ui, app, "cut", None, "Cut", "edit.cut", json!({}), false);
+            small(ui, app, "copy", None, "Copy", "edit.copy", json!({}), false);
             format_painter_button(ui, app);
         });
     });
     group(ui, "Font", Some("format.fontDialog"), app, |ui, app| {
         stack(ui, |ui| {
+            ui.add_space(ROW_TOP);
             crate::widgets::row(ui, |ui| {
                 let font = st.get("font").and_then(Value::as_str).unwrap_or("").to_string();
                 let font = app.previews.font_shown(&font);
                 let fams = app.previews.families();
                 let recent: Vec<String> = app.ui.recent_fonts.iter().map(|f| app.previews.font_shown(f)).collect();
                 let prev = app.previews.font_preview_fn();
-                if let Some(f) = crate::widgets::font_combo_with_recent_hint(ui, "font", 150.0, &font, &fams, &recent, Some(&*prev), tl!("Font")) {
+                if let Some(f) = crate::widgets::font_combo_with_recent_hint(ui, "font", 132.0, &font, &fams, &recent, Some(&*prev), tl!("Font")) {
                     let _ = if f == crate::widgets::ADD_FONT {
                         app.run("font.add", json!({}))
                     } else if f == crate::widgets::LOAD_SYSTEM_FONTS {
@@ -1002,6 +979,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
                 ui.add_space(3.0);
                 small(ui, app, "grow", None, "Increase Font Size", "format.growFont", json!({}), false);
                 small(ui, app, "shrink", None, "Decrease Font Size", "format.shrinkFont", json!({}), false);
+                crate::widgets::vsep(ui);
                 menu_button(ui, app, "case", None, "Change Case", false, "format.changeCase", |ui, app| {
                     mi(ui, app, "Sentence case.", "format.changeCase", json!({"mode": "sentence"}));
                     mi(ui, app, "lowercase", "format.changeCase", json!({"mode": "lower"}));
@@ -1009,10 +987,10 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
                     mi(ui, app, "Capitalize Each Word", "format.changeCase", json!({"mode": "title"}));
                     mi(ui, app, "tOGGLE cASE", "format.changeCase", json!({"mode": "toggle"}));
                 });
+                crate::widgets::vsep(ui);
                 small(ui, app, "clear", None, "Clear All Formatting", "format.clear", json!({}), false);
-                small(ui, app, "phonetic", None, "Phonetic Guide", "format.phonetic", json!({}), false);
             });
-            ui.add_space(3.0);
+            ui.add_space(ROW_GAP);
             crate::widgets::row(ui, |ui| {
                 small(ui, app, "bold", None, "Bold", "format.bold", json!({}), flag("bold"));
                 small(ui, app, "italic", None, "Italic", "format.italic", json!({}), flag("italic"));
@@ -1033,9 +1011,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
                 small(ui, app, "strike", None, "Strikethrough", "format.strikethrough", json!({}), flag("strike"));
                 small(ui, app, "subscript", None, "Subscript", "format.subscript", json!({}), flag("subscript"));
                 small(ui, app, "superscript", None, "Superscript", "format.superscript", json!({}), flag("superscript"));
-                small(ui, app, "charborder", None, "Character Border", "format.border", json!({}), flag("border"));
-                small(ui, app, "enclose", None, "Enclose Characters", "format.enclose", json!({}), false);
-                ui.add_space(4.0);
+                crate::widgets::vsep(ui);
                 menu_button(ui, app, "effects", None, "Text Effects and Typography", false, "", |ui, app| {
                     let theme = app.session.doc.settings.theme_colors.clone();
                     crate::wordart_menus::style_gallery(ui, app, "format.textEffects");
@@ -1092,9 +1068,9 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
     };
     crate::widgets::group_narrow(ui, "Paragraph", Some("para.dialog"), app, narrow, |ui, app| {
         let rp = app.session.doc.para_at(&app.session.sel.focus).map(|p| app.session.doc.styles.resolve_para(&p.props));
-        let rtl = rp.as_ref().is_some_and(|r| r.bidi);
         let lists = wordcraft_engine::cmd::para::list_buttons(&app.session.doc, rp.as_ref().and_then(|r| r.numbering));
         stack(ui, |ui| {
+            ui.add_space(ROW_TOP);
             crate::widgets::row(ui, |ui| {
                 split(ui, app, "bullets", "Bullets", "para.bullets", json!({}), lists.bullets, None, |ui, app| {
                     ui.label(egui::RichText::new(tl!("Bullet Library")).small().weak());
@@ -1159,25 +1135,23 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
                         mi(ui, app, &format!("Change to Level {}", lv + 1), "para.listLevel", json!({"level": lv}));
                     }
                 });
-                ui.add_space(4.0);
+                crate::widgets::vsep(ui);
                 small(ui, app, "outdent", None, "Decrease Indent", "para.outdent", json!({}), false);
                 small(ui, app, "indent", None, "Increase Indent", "para.indent", json!({}), false);
-                ui.add_space(4.0);
+                crate::widgets::vsep(ui);
                 small(ui, app, "sort", None, "Sort", "para.sort", json!({}), false);
+                crate::widgets::vsep(ui);
                 let marks = app.session.view.marks;
                 small(ui, app, "pilcrow", None, "Show/Hide ¶", "view.marks", json!({}), marks);
             });
-            ui.add_space(3.0);
+            ui.add_space(ROW_GAP);
             crate::widgets::row(ui, |ui| {
                 use wordcraft_doc::Align as A;
                 small(ui, app, "alignLeft", None, "Align Left", "para.alignLeft", json!({}), align == A::Left);
                 small(ui, app, "alignCenter", None, "Center", "para.alignCenter", json!({}), align == A::Center);
                 small(ui, app, "alignRight", None, "Align Right", "para.alignRight", json!({}), align == A::Right);
                 small(ui, app, "justify", None, "Justify", "para.justify", json!({}), align == A::Justify);
-                ui.add_space(4.0);
-                small(ui, app, "textLtr", None, "Left-to-Right Text Direction", "para.ltr", json!({}), !rtl);
-                small(ui, app, "textRtl", None, "Right-to-Left Text Direction", "para.rtl", json!({}), rtl);
-                ui.add_space(4.0);
+                crate::widgets::vsep(ui);
                 menu_button(ui, app, "lineSpacing", None, "Line and Paragraph Spacing", false, "para.lineSpacing", |ui, app| {
                     for v in [1.0, 1.15, 1.5, 2.0, 2.5, 3.0] {
                         mi(ui, app, &format!("{v}"), "para.lineSpacing", json!({"value": v}));
@@ -1187,6 +1161,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
                     mi(ui, app, "Remove Space After Paragraph", "para.removeSpaceAfter", json!({}));
                     mi(ui, app, "Line Spacing Options…", "para.dialog", json!({}));
                 });
+                crate::widgets::vsep(ui);
                 split(ui, app, "shading", "Shading", "para.shading", json!({"color": app.canvas.last_shading.clone()}), false, None, |ui, app| {
                     mi(ui, app, "No Color", "para.shading", json!({"color": null}));
                     let theme = app.session.doc.settings.theme_colors.clone();
@@ -1212,49 +1187,30 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             });
         });
     });
+    // Styles as two large buttons, as in the owner's design: the gallery in a drop-down, and the
+    // Styles pane.
     group(ui, "Styles", Some("styles.pane"), app, |ui, app| {
-        crate::previews::style_gallery(app, ui, &st);
-    });
-    group(ui, "Editing", None, app, |ui, app| {
-        stack(ui, |ui| {
-            menu_button(ui, app, "find", Some("Find"), "Find", false, "edit.find", |ui, app| {
-                // As in Word: Find searches in the Navigation pane; Advanced Find is the dialog (#712).
-                mi(ui, app, "Find", "edit.find", json!({}));
-                mi(ui, app, "Advanced Find…", "edit.advancedFind", json!({}));
-                mi(ui, app, "Go To…", "ui.dialog", json!({"name": "goto"}));
-            });
-            small(ui, app, "replace", Some("Replace"), "Replace", "ui.dialog", json!({"name": "replace"}), false);
-            menu_button(ui, app, "select", Some("Select"), "Select", false, "select.all", |ui, app| {
-                mi(ui, app, "Select All", "select.all", json!({}));
-                mi(ui, app, "Select Paragraph", "select.paragraph", json!({}));
-                mi(ui, app, "Select Sentence", "select.sentence", json!({}));
-            });
+        menu_button(ui, app, "styles", Some("Styles"), "Styles", true, "", |ui, app| {
+            crate::previews::style_gallery(app, ui, &st);
         });
+        big(ui, app, "stylesPane", "Styles\nPane", "styles.pane", json!({}), false);
     });
+    // Dictate works at a click; the language to listen for is chosen in its ▾ menu.
     group(ui, "Voice", None, app, |ui, app| {
         let on = app.dictation.active;
-        crate::widgets::big_toggle(ui, app, "dictate", "Dictate", "tools.dictate", on);
-        // The language to listen for.
-        let current = crate::dictation::LANGUAGES
-            .iter()
-            .find(|(c, _)| *c == app.ui.dictation_language)
-            .map_or_else(|| tl!("Interface language").to_string(), |(_, n)| (*n).to_string());
+        let current = crate::dictation::language(app);
         app.want_script_fonts = true;
-        // Документы: the language sits in a column beside the button, its name above the list.
-        ui.vertical(|ui| {
-            ui.add_space(12.0);
-            let t = Tokens::get(ui.ctx());
-            ui.label(egui::RichText::new(tl!("Language")).font(regular(11.0)).color(t.text_dim));
-            ui.add_space(2.0);
-            egui::ComboBox::from_id_salt("dictation_language").selected_text(current).width(118.0).show_ui(ui, |ui| {
-                ui.selectable_value(&mut app.ui.dictation_language, String::new(), tl!("Interface language"));
-                for (code, name) in crate::dictation::LANGUAGES {
-                    ui.selectable_value(&mut app.ui.dictation_language, code.to_string(), name);
+        crate::widgets::big_split(ui, app, "dictate", "Dictate", "tools.dictate", json!({}), on, |ui, app| {
+            ui.label(egui::RichText::new(tl!("Language")).small().weak());
+            for (code, name) in crate::dictation::LANGUAGES {
+                if ui.selectable_label(current == code, name).clicked() {
+                    app.ui.dictation_language = code.to_string();
+                    ui.close();
                 }
-            });
+            }
         });
     });
-    // Lexicon: no Editor group on Home (Spelling & Grammar stays on the Review tab and F7).
+    // Документы: no Editing or Editor group (Find is ⌘F / Ctrl+F and the search box; spelling F7).
 }
 
 fn insert(app: &mut WordApp, ui: &mut Ui) {
@@ -3231,7 +3187,7 @@ mod tests {
             app,
         );
         h.run_steps(3);
-        let buttons = [tl!("Comments"), tl!("Editing")].map(|b| h.get_by_label(b).rect());
+        let buttons = [tl!("Editing")].map(|b| h.get_by_label(b).rect());
         for tab in ["Table Design", "Table Layout"] {
             let r = h.get_by_label(tl!(tab)).rect();
             assert!(r.right() <= 1280.0 && buttons.iter().all(|b| !b.intersects(r)), "{tab} {r:?} under {buttons:?}");
@@ -3261,9 +3217,9 @@ mod tests {
                     app,
                 );
                 h.run_steps(3);
-                let buttons: Vec<Rect> =
-                    [tl!("Comments"), tl!("Editing"), tl!("Share")].iter().filter_map(|b| h.query_by_label(b).map(|n| n.rect())).collect();
-                assert_eq!(buttons.len(), 3, "{lang} {width}: the three buttons are on the strip");
+                let buttons: Vec<Rect> = [tl!("Editing")].iter().filter_map(|b| h.query_by_label(b).map(|n| n.rect())).collect();
+                // Документы: the Editing/Reviewing switch is the strip's only button.
+                assert_eq!(buttons.len(), 1, "{lang} {width}: the Editing switch is on the strip");
                 assert!(buttons.iter().all(|b| b.right() <= width + 0.5 && b.left() >= 0.0), "{lang} {width}: buttons inside {buttons:?}");
                 for tab in crate::ribbon::TABS.iter().copied().chain(["Table Design", "Table Layout"]) {
                     // A group folded into a button can share the tab's name (Draw): only the node on

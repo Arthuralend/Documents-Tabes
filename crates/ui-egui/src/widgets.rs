@@ -6,14 +6,17 @@ use serde_json::Value;
 use crate::theme::{Tokens, regular};
 use crate::{WordApp, icons};
 
-/// Height of the ribbon content area (without group labels).
-pub const CONTENT_H: f32 = 66.0;
-/// Height of the group title row under the content.
-pub const LABEL_H: f32 = 18.0;
-/// Large buttons: centre of the 32 px icon, top of the first label line, and the pitch and
+/// Height of the ribbon content area.
+pub const CONTENT_H: f32 = 72.0;
+/// Документы: the ribbon has no group title row (Clipboard, Font, Paragraph…), as in the owner's
+/// design; groups are told apart by their dividers.
+pub const LABEL_H: f32 = 0.0;
+/// A folded group's drop-down still names its group: the height of that title row.
+const POPUP_TITLE_H: f32 = 18.0;
+/// Large buttons: centre of the large icon, top of the first label line, and the pitch and
 /// height of a label line (`regular(11.5)`; a test checks the font's real line height).
-pub const BIG_ICON_Y: f32 = 18.0;
-pub const BIG_LABEL_Y: f32 = 36.0;
+pub const BIG_ICON_Y: f32 = 21.0;
+pub const BIG_LABEL_Y: f32 = 41.0;
 pub const LABEL_PITCH: f32 = 13.0;
 pub const LABEL_LINE_H: f32 = 14.0;
 // #653: a two-line label ends inside the content, above the group title row.
@@ -269,17 +272,81 @@ fn big_button(ui: &mut Ui, app: &mut WordApp, icon: &str, label: &str, id: &str,
     resp
 }
 
+/// A large split button (Документы, as in the owner's design): the icon and label run `id`; the
+/// small ▾ beside the icon opens `menu`. `checked` draws a mode that stays on (Dictate).
+#[allow(clippy::too_many_arguments)]
+pub fn big_split(
+    ui: &mut Ui,
+    app: &mut WordApp,
+    icon: &str,
+    label: &str,
+    id: &str,
+    params: Value,
+    checked: bool,
+    menu: impl FnOnce(&mut Ui, &mut WordApp),
+) -> Response {
+    let label = tl!(label);
+    let t = Tokens::get(ui.ctx());
+    let galley_w =
+        label.split('\n').map(|l| ui.ctx().fonts_mut(|f| f.layout_no_wrap(l.to_string(), regular(11.5), t.text).size().x)).fold(0.0, f32::max);
+    let w = (galley_w + 12.0).max(BIG_ICON + 24.0);
+    let (r, _) = ui.allocate_exact_size(vec2(w, CONTENT_H), Sense::hover());
+    // The ▾ beside the icon, and the rest of the button.
+    let arrow = Rect::from_center_size(pos2(r.center().x + BIG_ICON / 2.0 + 7.0, r.min.y + BIG_ICON_Y), vec2(13.0, BIG_ICON));
+    let main = r;
+    let resp = ui.interact(main, ui.id().with(("big_split", id)), Sense::click());
+    let aresp = ui.interact(arrow, ui.id().with(("big_split_arrow", id)), Sense::click());
+    keytip_badge(ui, r, id, &label.replace('\n', " "));
+    let on = enabled(app, id);
+    bg(ui, r, &resp, checked, &t);
+    if aresp.hovered() {
+        ui.painter().rect_filled(arrow, CornerRadius::same(3), t.pressed);
+    }
+    let (c, a) = if on { (t.icon, t.accent) } else { (t.text_disabled, t.text_disabled) };
+    let ic = Rect::from_center_size(pos2(r.center().x - 3.0, r.min.y + BIG_ICON_Y), vec2(BIG_ICON, BIG_ICON));
+    icons::paint(ui.painter(), ic, icon, c, a);
+    icons::paint(ui.painter(), Rect::from_center_size(arrow.center(), vec2(DROPDOWN, DROPDOWN)), "dropdown", c, c);
+    let mut y = r.min.y + BIG_LABEL_Y;
+    for l in label.split('\n') {
+        label_line(ui, r.center().x, y, l, regular(11.5), if on { t.text } else { t.text_disabled }, false);
+        y += LABEL_PITCH;
+    }
+    let resp = tooltip(app, resp, &label.replace('\n', " "), id);
+    command_menu(&resp, app, id);
+    if resp.clicked() && !aresp.clicked() && on {
+        run_from_ribbon(app, id, params);
+    }
+    let (arrow_title, _) = tooltip_lines(&crate::i18n::fmt(tl!("{name} options"), &[("name", &label.replace('\n', " "))]), "", "", None);
+    show_hint(&aresp, &arrow_title, &[]);
+    aresp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, on, &arrow_title));
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, on, label.replace('\n', " ")));
+    if on {
+        egui::Popup::menu(&aresp).show(|ui| {
+            ui.set_min_width(180.0);
+            menu(ui, app);
+        });
+    }
+    resp
+}
+
+/// A thin divider between clusters of small buttons in a row (Документы, as in the owner's design).
+pub fn vsep(ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
+    let (r, _) = ui.allocate_exact_size(vec2(11.0, SMALL_H), Sense::hover());
+    ui.painter().line_segment([pos2(r.center().x, r.min.y + 3.0), pos2(r.center().x, r.max.y - 3.0)], Stroke::new(1.0, t.border));
+}
+
 /// A small button: 16 px icon with an optional label; `checked` draws the toggled state.
 pub fn small(ui: &mut Ui, app: &mut WordApp, icon: &str, label: Option<&str>, tip: &str, id: &str, params: Value, checked: bool) -> Response {
     small_sized(ui, app, icon, label, tip, id, params, checked, vec2(SMALL_W, SMALL_H), SMALL_ICON)
 }
 
 /// Width of a small button's icon cell.
-pub const SMALL_W: f32 = 26.0;
+pub const SMALL_W: f32 = 28.0;
 /// Height of a small button.
-pub const SMALL_H: f32 = 22.0;
+pub const SMALL_H: f32 = 24.0;
 /// Size of a small button's icon (a little larger than Word's 16, as Документы draws them).
-pub const SMALL_ICON: f32 = 19.0;
+pub const SMALL_ICON: f32 = 20.0;
 /// Size of a large button's icon.
 pub const BIG_ICON: f32 = 34.0;
 
@@ -457,9 +524,7 @@ pub fn group_titled(ui: &mut Ui, id_title: &str, title: &str, launcher: Option<&
     } else {
         // Not folded: a drop-down left open while it was folded doesn't come back by itself.
         ui.data_mut(|d| d.remove::<bool>(collapsed_open_id(ui, id_title, position)));
-        let label_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(title.to_string(), regular(11.0), t.group_label).size().x);
         let inner = ui.vertical(|ui| {
-            ui.set_min_width(label_w + if launcher.is_some() { 22.0 } else { 10.0 });
             crate::ribbon_fit::set_compact(ui.ctx(), level == crate::ribbon_fit::COMPACT);
             let content = ui.allocate_ui_with_layout(vec2(ui.available_width(), CONTENT_H), egui::Layout::left_to_right(egui::Align::Min), |ui| {
                 ui.spacing_mut().item_spacing = vec2(1.0, 1.0);
@@ -473,15 +538,8 @@ pub fn group_titled(ui: &mut Ui, id_title: &str, title: &str, launcher: Option<&
             #[cfg(not(test))]
             let _ = content;
         });
-        let r = inner.response.rect;
-        title_row(
-            ui,
-            Rect::from_min_max(pos2(start.x, start.y + CONTENT_H), pos2(r.max.x, start.y + CONTENT_H + LABEL_H)),
-            id_title,
-            title,
-            launcher,
-            app,
-        );
+        // No title row (Документы): the group's settings stay reachable from its menus.
+        let _ = (inner, launcher);
     }
     ui.add_space(5.0);
     let x = ui.cursor().min.x;
@@ -587,7 +645,7 @@ fn group_drop_down(
                     ui.spacing_mut().item_spacing = vec2(1.0, 1.0);
                     add(ui, app);
                 });
-                let (row, _) = ui.allocate_exact_size(vec2(ui.min_rect().width(), LABEL_H), Sense::hover());
+                let (row, _) = ui.allocate_exact_size(vec2(ui.min_rect().width(), POPUP_TITLE_H), Sense::hover());
                 title_row(ui, row, id_title, title, launcher, app);
             });
         });
@@ -617,14 +675,14 @@ pub fn group_narrow(
     let t = Tokens::get(ui.ctx());
     let start = ui.cursor().min;
     let position = crate::ribbon_fit::position(ui.ctx());
-    let inner = ui.allocate_ui_with_layout(vec2(MINI_W, CONTENT_H), egui::Layout::top_down(egui::Align::Min), |ui| {
+    let inner = ui.allocate_ui_with_layout(vec2(MINI_W, CONTENT_H - MORE_H), egui::Layout::top_down(egui::Align::Min), |ui| {
         ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
         ui.set_min_width(MINI_W);
         narrow(ui, app);
     });
     let x1 = inner.response.rect.max.x.max(start.x + MINI_W);
     // The ▼ under the column: the rest of the group.
-    let more = Rect::from_min_max(pos2(start.x, start.y + CONTENT_H), pos2(x1, start.y + CONTENT_H + LABEL_H));
+    let more = Rect::from_min_max(pos2(start.x, start.y + CONTENT_H - MORE_H), pos2(x1, start.y + CONTENT_H));
     let open_id = collapsed_open_id(ui, title, position);
     let was_open = ui.data(|d| d.get_temp::<bool>(open_id)).unwrap_or(false);
     let resp = ui.interact(more, ui.id().with(("group_more", title, position)), Sense::click());
@@ -642,8 +700,10 @@ pub fn group_narrow(
 
 /// Width of a [`mini`] button.
 pub const MINI_W: f32 = 28.0;
-/// Height of a [`mini`] button: four fill the ribbon's content height.
-pub const MINI_H: f32 = CONTENT_H / 4.0;
+/// Height of the ▼ under a folded group's column ([`group_narrow`]).
+const MORE_H: f32 = 13.0;
+/// Height of a [`mini`] button: four and the ▼ under them fill the ribbon's content height.
+pub const MINI_H: f32 = (CONTENT_H - MORE_H) / 4.0;
 
 /// A button of a folded group's column ([`group_narrow`]): its icon only, the name in the tooltip.
 pub fn mini(ui: &mut Ui, app: &mut WordApp, icon: &str, tip: &str, id: &str, params: Value, checked: bool) -> Response {

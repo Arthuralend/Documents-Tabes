@@ -369,8 +369,8 @@ mod ui_tests {
     /// their commands: a button, then an item of a menu inside it.
     #[test]
     fn collapsed_group_stays_open_and_runs_its_commands() {
-        let mut h = harness(760.0);
-        assert_eq!(planned(&h.ctx, "Font"), Some(COLLAPSED), "Font folds at 760 pt");
+        let mut h = harness(560.0);
+        assert_eq!(planned(&h.ctx, "Font"), Some(COLLAPSED), "Font folds at 560 pt");
         h.state_mut().run("text.insert", json!({"text": "quiet words"})).unwrap();
         h.state_mut().run("select.all", json!({})).unwrap();
         h.get_by_role_and_label(Role::Button, "Font").click();

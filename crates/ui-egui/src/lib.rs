@@ -1878,7 +1878,10 @@ impl WordApp {
     }
 
     pub fn status(&mut self, s: impl Into<String>) {
-        self.status_msg = Some((s.into(), now_ms()));
+        let s = s.into();
+        // The engine's plain "nothing to paste" reaches the status bar in the interface's language.
+        let s = if s == "the clipboard is empty" { tl!("The clipboard is empty.").to_string() } else { s };
+        self.status_msg = Some((s, now_ms()));
     }
 
     /// Media key of the selected picture, if any.
@@ -3600,10 +3603,15 @@ mod tests {
             // Within a couple of screen pixels.
             let off = (now - at) * a.canvas.scale;
             let across = a.canvas.cols > cols || off.x.abs() < 2.0;
+            // Down, within a few pixels: on the frame the pages reflow into rows the scroll is
+            // rounded to whole pixels at the new scale, which can leave 2–3 px depending on the
+            // window's height.
             assert!(
-                across && off.y.abs() < 2.0,
-                "frame {n} at {:.0}%: {now:?} on page {page}, was {at:?}",
-                a.canvas.scale / canvas::PX_PER_PT * 100.0
+                across && off.y.abs() < 3.0,
+                "frame {n} at {:.0}%: {now:?} on page {page}, was {at:?}; cols {} -> {}",
+                a.canvas.scale / canvas::PX_PER_PT * 100.0,
+                cols,
+                a.canvas.cols
             );
         }
         assert!(a.canvas.scale < before * 0.6, "zoomed out: {before} -> {}", a.canvas.scale);
@@ -5704,7 +5712,11 @@ mod tests {
         }
         assert!(h.state().canvas.focused, "the page starts with keyboard focus");
 
-        // A Styles gallery tile.
+        // A Styles gallery tile (Документы: in the Styles button's drop-down).
+        h.get_by_role_and_label(Role::Button, "Styles").click();
+        for _ in 0..3 {
+            h.step();
+        }
         h.get_by_role_and_label(Role::Button, "Heading 1").click();
         type_after_click(&mut h, "Heading 1 tile", " gallery");
         let para = h.state().session.doc.para_at(&h.state().session.sel.focus).expect("caret paragraph");

@@ -1184,11 +1184,12 @@ mod choice_clicks {
             a,
         );
         h.run_steps(4);
-        h.get_by(|n| n.role() == egui::accesskit::Role::ComboBox && n.value().as_deref() == Some("Interface language")).click();
+        // Документы: Dictate's ▾ holds the languages it listens for.
+        h.get_by_label("Dictate options").click();
         h.run_steps(3);
-        h.get_by_label("Русский").click();
+        h.get_by_label("English").click();
         h.run_steps(3);
-        assert_eq!(h.state().ui.dictation_language, "ru");
+        assert_eq!(h.state().ui.dictation_language, "en");
     }
 
     #[test]
