@@ -19,6 +19,9 @@ use crate::WordApp;
 use crate::options::MeasureExt;
 use crate::theme::{Tokens, semibold};
 
+/// How to reach Документы' developer, FantasticSoft (About).
+pub const DEVELOPER_EMAIL: &str = "armenoid@gmail.com";
+
 /// The suite Документы belongs to (with Таблицы): a brand name, never translated.
 pub const SUITE_NAME: &str = "FondOffice Документы и таблицы";
 
@@ -2687,7 +2690,8 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                     ui.hyperlink_to(tl!("Source code: github.com/Arthuralend/Documents-Tabes"), "https://github.com/Arthuralend/Documents-Tabes");
                     ui.add_space(6.0);
                     // The licence texts, with their copyright notices, ship with the app.
-                    ui.label(tl!("Developer: FondSoftware"));
+                    ui.label(tl!("Developer: FantasticSoft"));
+                    ui.hyperlink_to(DEVELOPER_EMAIL, format!("mailto:{DEVELOPER_EMAIL}"));
                     ui.label(egui::RichText::new(tl!("Free software under the MIT or Apache-2.0 licence.")).small().weak());
                 }
             }

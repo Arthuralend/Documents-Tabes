@@ -391,6 +391,9 @@ pub fn indent(s: &mut Session, _: &Value) -> CmdResult {
     let a = s.sel.ordered().0;
     let paths = super::selected_paths(s);
     let tab = s.doc.settings.default_tab.max(1.0);
+    // Документы (the app sets `new_first_line_indent`): an indented paragraph moves as one block,
+    // its first line (the red line) aligned with the rest.
+    let align_first = s.new_first_line_indent.is_some();
     for path in paths {
         let (num, left) = {
             let Some(p) = s.doc.para(a.story, &path) else { continue };
@@ -402,6 +405,10 @@ pub fn indent(s: &mut Session, _: &Value) -> CmdResult {
             None => {
                 para.props.indent_left = Some(((left / tab).floor() + 1.0) * tab);
                 para.props.cancel_char_indents(true, false, false);
+                if align_first {
+                    para.props.indent_first = Some(0.0);
+                    para.props.cancel_char_indents(false, false, true);
+                }
             }
         }
         para.touch();
@@ -413,6 +420,8 @@ pub fn outdent(s: &mut Session, _: &Value) -> CmdResult {
     let a = s.sel.ordered().0;
     let paths = super::selected_paths(s);
     let tab = s.doc.settings.default_tab.max(1.0);
+    // Документы: back at the margin, a paragraph takes its red line again.
+    let red_line = s.new_first_line_indent;
     for path in paths {
         let (num, left) = {
             let Some(p) = s.doc.para(a.story, &path) else { continue };
@@ -422,8 +431,15 @@ pub fn outdent(s: &mut Session, _: &Value) -> CmdResult {
         match num {
             Some(n) => para.props.numbering = Some(NumRef { num: n.num, level: n.level.saturating_sub(1) }),
             None => {
-                para.props.indent_left = Some((((left / tab).ceil() - 1.0) * tab).max(0.0));
+                let next = (((left / tab).ceil() - 1.0) * tab).max(0.0);
+                para.props.indent_left = Some(next);
                 para.props.cancel_char_indents(true, false, false);
+                if let Some(first) = red_line
+                    && next <= 0.0
+                    && left > 0.0
+                {
+                    para.props.indent_first = Some(first);
+                }
             }
         }
         para.touch();

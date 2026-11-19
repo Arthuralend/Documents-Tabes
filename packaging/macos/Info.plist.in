@@ -49,7 +49,7 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>FondSoftware. MIT OR Apache-2.0.</string>
+  <string>FantasticSoft (armenoid@gmail.com). MIT OR Apache-2.0.</string>
 
   <!-- Documents Lexicon opens (system type declarations). -->
   <key>CFBundleDocumentTypes</key>

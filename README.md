@@ -3,7 +3,8 @@
 <p align="center">
   <b>Текстовый процессор с проверкой орфографии на русском и английском — для Android, Windows, macOS, Linux и браузера.</b><br>
   <i>A word processor with Russian and English spelling, for Android, Windows, macOS, Linux and the web.</i><br>
-  Разработчик — <b>FondSoftware</b>. В пакет входят две программы: <b>Документы</b> и <b>Таблицы</b>.
+  В пакет входят две программы: <b>Документы</b> (разработчик — <b>FantasticSoft</b>, armenoid@gmail.com)
+  и <b>Таблицы</b> (FondSoftware).
 </p>
 
 «Документы» основаны на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом

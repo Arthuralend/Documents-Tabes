@@ -15,9 +15,9 @@ fn main() {
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/wordcraft.ico")
         .set("ProductName", "Документы")
-        .set("FileDescription", "Документы — FondSoftware")
-        .set("CompanyName", "FondSoftware")
-        .set("LegalCopyright", "FondSoftware. Based on WordCraft, MIT OR Apache-2.0.")
+        .set("FileDescription", "Документы — FantasticSoft")
+        .set("CompanyName", "FantasticSoft")
+        .set("LegalCopyright", "FantasticSoft (armenoid@gmail.com). Based on WordCraft, MIT OR Apache-2.0.")
         .set("OriginalFilename", "Documents.exe")
         .set("InternalName", "Documents");
     if let Err(e) = res.compile() {

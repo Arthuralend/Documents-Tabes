@@ -1195,6 +1195,23 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
         });
         big(ui, app, "stylesPane", "Styles\nPane", "styles.pane", json!({}), false);
     });
+    // Find, Replace and Select, in a column before Dictate.
+    group(ui, "Editing", None, app, |ui, app| {
+        stack(ui, |ui| {
+            menu_button(ui, app, "find", Some("Find"), "Find", false, "edit.find", |ui, app| {
+                // As in Word: Find searches in the Navigation pane; Advanced Find is the dialog (#712).
+                mi(ui, app, "Find", "edit.find", json!({}));
+                mi(ui, app, "Advanced Find…", "edit.advancedFind", json!({}));
+                mi(ui, app, "Go To…", "ui.dialog", json!({"name": "goto"}));
+            });
+            small(ui, app, "replace", Some("Replace"), "Replace", "ui.dialog", json!({"name": "replace"}), false);
+            menu_button(ui, app, "select", Some("Select"), "Select", false, "select.all", |ui, app| {
+                mi(ui, app, "Select All", "select.all", json!({}));
+                mi(ui, app, "Select Paragraph", "select.paragraph", json!({}));
+                mi(ui, app, "Select Sentence", "select.sentence", json!({}));
+            });
+        });
+    });
     // Dictate works at a click; the language to listen for is chosen in its ▾ menu.
     group(ui, "Voice", None, app, |ui, app| {
         let on = app.dictation.active;
@@ -1210,7 +1227,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             }
         });
     });
-    // Документы: no Editing or Editor group (Find is ⌘F / Ctrl+F and the search box; spelling F7).
+    // Документы: no Editor group (spelling is F7).
 }
 
 fn insert(app: &mut WordApp, ui: &mut Ui) {

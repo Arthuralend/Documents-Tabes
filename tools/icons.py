@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Write FondOffice's app icons (needs Pillow).
 
-- The two apps' icons are the owner's pictures (FondSoftware): Документы, a page of text with a
-  terracotta D tile, and Таблицы, the same page with a green T tile. Their sources are
-  assets/app-icon/source/documents.webp and tables.webp; `cut` takes the rounded tile out of the
-  picture (its faint shadow dropped, its body made opaque) and squares it.
+- The two apps' icons are the owner's pictures. Документы: pages with a red D and a fountain pen
+  on a dark tile, assets/app-icon/source/documents-retro.icns (a macOS icon: used as is on macOS,
+  its tile cut out and squared for Windows, Linux and Android). Таблицы: a page with a green T
+  tile, assets/app-icon/source/tables.webp. `cut` takes the rounded tile out of a picture (its
+  faint shadow dropped, its body made opaque) and squares it.
 - The suite icon is the owner's picture assets/app-icon/source/office-pro-max.png: the installer's
   and the disk image's icon.
 
@@ -51,14 +52,16 @@ def framed(src, size, body=1.0):
     return out
 
 
-def write_set(folder, prefix, src):
+def write_set(folder, prefix, src, mac_src=None):
+    """`mac_src`: a picture already drawn on Apple's grid, used as is for the macOS icons."""
     # macOS icons sit on Apple's grid: an 824/1024 body with a transparent margin.
     mac = 824 / 1024
     framed(src, 1024).save(os.path.join(folder, f"{prefix}-1024.png"))
-    framed(src, 512, mac).save(os.path.join(folder, f"{prefix}-macos-512.png"))
+    mac_icon = (lambda size: mac_src.resize((size, size), Image.LANCZOS)) if mac_src else (lambda size: framed(src, size, mac))
+    mac_icon(512).save(os.path.join(folder, f"{prefix}-macos-512.png"))
     sizes = [16, 20, 24, 32, 40, 48, 64, 128, 256]
     framed(src, 256).save(os.path.join(folder, f"{prefix}.ico"), sizes=[(s, s) for s in sizes])
-    framed(src, 1024, mac).save(os.path.join(folder, f"{prefix}.icns"))
+    mac_icon(1024).save(os.path.join(folder, f"{prefix}.icns"))
 
 
 def hicolor(folder, app_id, src):
@@ -71,7 +74,7 @@ def hicolor(folder, app_id, src):
 def android(name, src):
     """An adaptive icon (the whole tile as the foreground, inside the 66 dp safe zone, on the tile's
     own cream) and a legacy icon for older launchers."""
-    cream = src.getpixel((512, 40))[:3] + (255,)
+    cream = src.getpixel((60, 512))[:3] + (255,)
     for dpi, scale in [("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4)]:
         folder = os.path.join(RES, f"mipmap-{dpi}")
         os.makedirs(folder, exist_ok=True)
@@ -82,9 +85,10 @@ def android(name, src):
 
 
 def main():
-    documents = cut(os.path.join(SRC, "documents.webp"))
+    retro = Image.open(os.path.join(SRC, "documents-retro.icns")).convert("RGBA")
+    documents = cut(os.path.join(SRC, "documents-retro.icns"))
     tables = cut(os.path.join(SRC, "tables.webp"))
-    write_set(DIR, "wordcraft", documents)
+    write_set(DIR, "wordcraft", documents, retro)
     write_set(DIR, "sheets", tables)
     write_set(TABLES_DIR, "gridcraft", tables)
     hicolor(DIR, APP_ID, documents)

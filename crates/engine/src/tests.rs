@@ -2551,7 +2551,7 @@ fn set_author_refuses_blank_names_and_clamps_long_ones() {
     let mut s = s();
     for bad in [json!(null), json!({}), json!({"name": 5}), json!({"name": ""}), json!({"name": " \t\n "}), json!({"name": "\u{0}\u{7}"})] {
         assert!(s.run("file.setAuthor", &bad).is_err(), "{bad} should be refused");
-        assert_eq!(s.author, "FondSoftware User", "a refused name leaves the author alone");
+        assert_eq!(s.author, "FantasticSoft User", "a refused name leaves the author alone");
     }
     run(&mut s, "file.setAuthor", json!({"name": "Ada\u{0}\u{1b} Lovelace"}));
     assert_eq!(s.author, "Ada Lovelace", "control characters can't reach the saved XML");
@@ -8617,4 +8617,34 @@ fn cut_of_a_table_or_whole_rows_removes_them() {
     assert_eq!(tables(&s), 0, "the whole table cut");
     run(&mut s, "edit.paste", json!({}));
     assert_eq!(tables(&s), 1, "and pasted back");
+}
+
+/// Документы: Increase Indent moves a paragraph with a red line as one block (its first line
+/// aligned with the rest); Decrease Indent back to the margin brings the red line back. Without
+/// the app's red line (Word's behaviour) the first-line indent is left alone.
+#[test]
+fn increase_indent_aligns_the_red_line() {
+    let mut w = s();
+    let mut s = s();
+    s.new_first_line_indent = Some(crate::NEW_FIRST_LINE_INDENT);
+    run(&mut s, "file.new", json!({}));
+    run(&mut s, "text.insert", json!({"text": "Абзац с красной строкой"}));
+    let props = |s: &Session| {
+        let p = s.doc.para(StoryRef::Body, &wordcraft_doc::Path(vec![0])).unwrap();
+        let r = s.doc.styles.resolve_para(&p.props);
+        (r.indent_left, r.indent_first)
+    };
+    assert!((props(&s).1 - crate::NEW_FIRST_LINE_INDENT).abs() < 0.01, "the red line to begin with");
+    run(&mut s, "para.indent", json!({}));
+    let (left, first) = props(&s);
+    assert!(left > 0.0 && first.abs() < 0.01, "indented as one block: left {left}, first {first}");
+    run(&mut s, "para.outdent", json!({}));
+    let (left, first) = props(&s);
+    assert!(left.abs() < 0.01 && (first - crate::NEW_FIRST_LINE_INDENT).abs() < 0.01, "back at the margin with its red line: {left} {first}");
+    // Word's own behaviour without the app's red line.
+    run(&mut w, "text.insert", json!({"text": "Word"}));
+    run(&mut w, "para.indents", json!({"firstLine": 20.0}));
+    run(&mut w, "para.indent", json!({}));
+    let p = w.doc.para(StoryRef::Body, &wordcraft_doc::Path(vec![0])).unwrap();
+    assert!((w.doc.styles.resolve_para(&p.props).indent_first - 20.0).abs() < 0.01);
 }
