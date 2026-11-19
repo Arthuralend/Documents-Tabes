@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Write FondOffice's app icons (needs Pillow).
 
-- The two apps' icons are the owner's pictures. Документы: pages with a red D and a fountain pen
-  on a dark tile, assets/app-icon/source/documents-retro.icns (a macOS icon: used as is on macOS,
-  its tile cut out and squared for Windows, Linux and Android). Таблицы: a page with a green T
-  tile, assets/app-icon/source/tables.webp. `cut` takes the rounded tile out of a picture (its
-  faint shadow dropped, its body made opaque) and squares it.
+- The two apps' icons are the owner's pictures. Документы: pages with a red D and a fountain pen,
+  no tile, assets/app-icon/source/documents-pen.webp; `fit` scales the drawing to fill the icon
+  (on macOS too, as large as the icon allows). Таблицы: a page with a green T tile,
+  assets/app-icon/source/tables.webp; `cut` takes the rounded tile out of a picture (its faint
+  shadow dropped, its body made opaque) and squares it.
 - The suite icon is the owner's picture assets/app-icon/source/office-pro-max.png: the installer's
   and the disk image's icon.
 
@@ -44,6 +44,20 @@ def cut(path):
     return tile.resize((1024, 1024), Image.LANCZOS)
 
 
+def fit(path, size=1024):
+    """The drawing in the picture at `path` (on a transparent background), scaled to fill a
+    transparent square of `size` px, centred."""
+    im = Image.open(path).convert("RGBA")
+    box = im.getchannel("A").point(lambda v: 255 if v >= 10 else 0).getbbox()
+    art = im.crop(box) if box else im
+    w, h = art.size
+    k = size / max(w, h, 1)
+    art = art.resize((max(1, round(w * k)), max(1, round(h * k))), Image.LANCZOS)
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.alpha_composite(art, ((size - art.width) // 2, (size - art.height) // 2))
+    return out
+
+
 def framed(src, size, body=1.0):
     """`src` scaled to `body` of a transparent `size` px square, centred."""
     inner = max(1, round(size * body))
@@ -72,9 +86,9 @@ def hicolor(folder, app_id, src):
 
 
 def android(name, src):
-    """An adaptive icon (the whole tile as the foreground, inside the 66 dp safe zone, on the tile's
-    own cream) and a legacy icon for older launchers."""
-    cream = src.getpixel((60, 512))[:3] + (255,)
+    """An adaptive icon (the drawing as the foreground, inside the 66 dp safe zone, on a warm
+    ivory) and a legacy icon for older launchers."""
+    cream = (0xFA, 0xF9, 0xF5, 255)
     for dpi, scale in [("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4)]:
         folder = os.path.join(RES, f"mipmap-{dpi}")
         os.makedirs(folder, exist_ok=True)
@@ -85,10 +99,10 @@ def android(name, src):
 
 
 def main():
-    retro = Image.open(os.path.join(SRC, "documents-retro.icns")).convert("RGBA")
-    documents = cut(os.path.join(SRC, "documents-retro.icns"))
+    documents = fit(os.path.join(SRC, "documents-pen.webp"))
     tables = cut(os.path.join(SRC, "tables.webp"))
-    write_set(DIR, "wordcraft", documents, retro)
+    # macOS: the drawing as large as the icon allows, not inside Apple's 824 px grid.
+    write_set(DIR, "wordcraft", documents, documents)
     write_set(DIR, "sheets", tables)
     write_set(TABLES_DIR, "gridcraft", tables)
     hicolor(DIR, APP_ID, documents)

@@ -137,6 +137,32 @@ fn nav(app: &mut WordApp, ui: &mut Ui) {
             app.session.find.results.clear();
         }
     }
+    // Документы: replace right here, under the search box (Word's Navigation pane only links to
+    // the Replace dialog). Replace takes the match that is selected and moves to the next one (the
+    // first press selects the first match); Replace All takes every match in one undo step.
+    let rid = egui::Id::new("nav_replace");
+    let mut with = ui.data(|d| d.get_temp::<String>(rid)).unwrap_or_default();
+    ui.add_space(3.0);
+    let w = egui::TextEdit::singleline(&mut with).hint_text(tl!("Replace with:")).desired_width(f32::INFINITY).show(ui).response;
+    if w.changed() {
+        ui.data_mut(|d| d.insert_temp(rid, with.clone()));
+    }
+    ui.horizontal(|ui| {
+        if q.is_empty() {
+            ui.disable();
+        }
+        let one = ui.button(tl!("Replace")).clicked();
+        let all = ui.button(tl!("Replace All")).clicked();
+        if one || all {
+            let id = if all { "edit.replaceAll" } else { "edit.replace" };
+            if let Err(e) = app.run(id, json!({"text": q, "with": with})) {
+                app.status(e);
+            }
+            // The results list follows the document (its count says what is left).
+            let _ = app.session.run("edit.find", &json!({"text": q}));
+            app.ui.nav_tab = "results".into();
+        }
+    });
     ui.add_space(4.0);
     ui.horizontal(|ui| {
         for (k, l) in [("headings", "Headings"), ("pages", "Pages"), ("results", "Results")] {
@@ -936,5 +962,53 @@ mod navigation_tests {
         let (top, second) = (text_left(0), text_left(1));
         assert!(top < 30.0, "a top-level heading starts at the pane's left edge, not centred: {top}px in");
         assert!((second - top - 14.0).abs() < 0.5, "a level-2 heading is indented 14px under its parent: {top} / {second}");
+    }
+}
+
+#[cfg(test)]
+mod nav_replace_tests {
+    use egui_kittest::kittest::Queryable;
+    use serde_json::json;
+
+    use crate::WordApp;
+
+    /// Документы: the Navigation pane (Ctrl+F) replaces right under its search box, as Word's
+    /// Find and Replace does: Replace selects the first match, then replaces it and moves on;
+    /// Replace All takes the rest.
+    #[test]
+    fn the_navigation_pane_replaces() {
+        let mut a = WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::from_text("кот и кот и кот")), crate::Services::default());
+        a.run("view.navigationPane", json!({"value": true})).unwrap();
+        let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(1600.0, 900.0)).build_ui_state(
+            |ui, app: &mut WordApp| {
+                let ctx = ui.ctx().clone();
+                app.logic(&ctx);
+                app.ui(ui);
+            },
+            a,
+        );
+        h.run_steps(3);
+        h.ctx.data_mut(|d| {
+            d.insert_temp(egui::Id::new("nav_query"), "кот".to_string());
+            d.insert_temp(egui::Id::new("nav_replace"), "пёс".to_string());
+        });
+        h.run_steps(2);
+        let text = |h: &egui_kittest::Harness<'static, WordApp>| h.state().session.doc.plain_text(wordcraft_doc::StoryRef::Body);
+        // The pane's button, not the ribbon's (the pane is below the ribbon).
+        let click = |h: &mut egui_kittest::Harness<'static, WordApp>, label: &str| {
+            if let Some(n) = h.get_all_by_label(label).max_by(|a, b| a.rect().min.y.total_cmp(&b.rect().min.y)) {
+                n.click();
+            }
+        };
+        click(&mut h, "Replace");
+        h.run_steps(2);
+        click(&mut h, "Replace");
+        h.run_steps(2);
+        assert_eq!(text(&h).matches("пёс").count(), 1, "one match replaced: {}", text(&h));
+        click(&mut h, "Replace All");
+        h.run_steps(2);
+        assert_eq!(text(&h), "пёс и пёс и пёс");
+        h.state_mut().run("edit.undo", json!({})).unwrap();
+        assert_eq!(text(&h).matches("пёс").count(), 1, "Replace All is one undo step");
     }
 }
