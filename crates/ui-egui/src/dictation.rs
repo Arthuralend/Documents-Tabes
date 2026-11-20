@@ -1,7 +1,7 @@
 //! Lexicon: Home › Dictate with the operating system's speech tools.
 //!
 //! The host starts recognition (`Services::dictate`) and hands back what was heard
-//! (`Services::heard`). Документы types the words into the document as they are heard: each new
+//! (`Services::heard`). Write types the words into the document as they are heard: each new
 //! guess of the phrase replaces the last one in place, the final words settle it (one undo step
 //! per phrase), and the words just added glow for a moment ([`trail`]) so it is plain where the
 //! text goes. Listening goes on until the Dictate button is pressed again. Where the system types

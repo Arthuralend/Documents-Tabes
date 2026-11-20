@@ -387,8 +387,8 @@ fn open_page(app: &mut WordApp, ui: &mut Ui) {
     // doesn't show up, Lexicon's own browser is always one click away.
     #[cfg(all(unix, not(target_os = "macos"), not(target_arch = "wasm32")))]
     if ui
-        .button(egui::RichText::new(tl!("Browse in Документы…")).font(medium(14.0)))
-        .on_hover_text(tl!("Open a file with Документы's own browser when the system file dialog doesn't appear."))
+        .button(egui::RichText::new(tl!("Browse in Write…")).font(medium(14.0)))
+        .on_hover_text(tl!("Open a file with Write's own browser when the system file dialog doesn't appear."))
         .clicked()
     {
         let _ = app.run("ui.fileBrowser", json!({}));
@@ -610,7 +610,7 @@ mod tests {
         let (app, root) = recovery_app();
         let mut h = recovery_harness(app);
         settle_recovery(&mut h);
-        // Документы starts on a new document; the copies wait in File › Recover.
+        // Write starts on a new document; the copies wait in File › Recover.
         assert!(!h.state().ui.backstage, "no Recover page at start");
         h.state_mut().run("ui.backstage", json!({"value": true, "page": "recover"})).unwrap();
         h.run_steps(4);

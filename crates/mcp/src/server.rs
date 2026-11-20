@@ -133,7 +133,7 @@ impl Server {
                 Ok(json!({
                     "protocolVersion": version,
                     "capabilities": {"tools": {}, "resources": {}},
-                    "serverInfo": {"name": "wordcraft", "title": "Документы", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": "https://github.com/Arthuralend/Documents-Tabes"},
+                    "serverInfo": {"name": "wordcraft", "title": "Write", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": "https://github.com/Arthuralend/Documents-Tabes"},
                     "instructions": format!(
                         "{INSTRUCTIONS} Backend: {}. Source: https://github.com/Arthuralend/Documents-Tabes",
                         self.backend.describe()

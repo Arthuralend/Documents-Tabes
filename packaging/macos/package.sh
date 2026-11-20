@@ -38,7 +38,7 @@ export MACOSX_DEPLOYMENT_TARGET=11.0
 IDENTITY="${MACOS_SIGN_IDENTITY:--}"
 SHORT_VERSION="${VERSION%%-*}"
 WORK="$CARGO_TARGET_DIR/macos-package"
-APP="$WORK/Документы.app"
+APP="$WORK/Write.app"
 SHEETS="$WORK/Таблицы.app"
 DMG="$DIST/Lexicon-$VERSION-macos-$ARCH.dmg"
 
@@ -106,19 +106,19 @@ notarize() {
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # The executable carries the app's name (CFBundleExecutable): macOS names the app menu's About,
-# Hide and Quit items after it, so it is Документы (Таблицы), never Lexicon.
-cp "$WORK/bin/wordcraft" "$APP/Contents/MacOS/Документы"
-cp "$ROOT/assets/app-icon/wordcraft.icns" "$APP/Contents/Resources/Documents.icns"
+# Hide and Quit items after it, so it is Write (Таблицы), never Lexicon.
+cp "$WORK/bin/wordcraft" "$APP/Contents/MacOS/Write"
+cp "$ROOT/assets/app-icon/wordcraft.icns" "$APP/Contents/Resources/Write.icns"
 # Licences of the embedded craft-fonts fonts (only when built with CRAFT_FONTS_DIR).
 copy_font_licences "$APP/Contents/Resources"
 cp "$ROOT/LICENSE-MIT" "$ROOT/LICENSE-APACHE" "$APP/Contents/Resources/"
 # The app's name in Finder, the Dock and the menu bar.
 for loc in en ru hy; do
   mkdir -p "$APP/Contents/Resources/$loc.lproj"
-  printf 'CFBundleDisplayName = "Документы";\nCFBundleName = "Документы";\n' > "$APP/Contents/Resources/$loc.lproj/InfoPlist.strings"
+  printf 'CFBundleDisplayName = "Write";\nCFBundleName = "Write";\n' > "$APP/Contents/Resources/$loc.lproj/InfoPlist.strings"
 done
 # The dictation permission prompts in Russian.
-printf 'NSMicrophoneUsageDescription = "Документы слушают микрофон, пока вы диктуете текст.";\nNSSpeechRecognitionUsageDescription = "Документы превращают вашу речь в текст во время диктовки.";\n' >> "$APP/Contents/Resources/ru.lproj/InfoPlist.strings"
+printf 'NSMicrophoneUsageDescription = "Write слушает микрофон, пока вы диктуете текст.";\nNSSpeechRecognitionUsageDescription = "Write превращает вашу речь в текст во время диктовки.";\n' >> "$APP/Contents/Resources/ru.lproj/InfoPlist.strings"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
   -e "s/@BUILD_SHA@/${WORDCRAFT_BUILD_SHA:-unknown}/g" \
   "$HERE/Info.plist.in" >"$APP/Contents/Info.plist"
@@ -148,7 +148,7 @@ xattr -cr "$APP"
 xattr -cr "$SHEETS"
 # Sign inside-out: nested code first, then the bundle itself (no --deep on the final signature).
 # Today the only nested code is the main executable; frameworks/helpers would be signed here too.
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Документы"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Write"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS/Contents/MacOS/Таблицы"
@@ -167,7 +167,7 @@ fi
 echo "==> building $DMG"
 STAGE="$WORK/dmg"
 mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Документы.app"
+ditto "$APP" "$STAGE/Write.app"
 ditto "$SHEETS" "$STAGE/Таблицы.app"
 ln -s /Applications "$STAGE/Applications"
 rm -f "$DMG"
@@ -192,7 +192,7 @@ hdiutil_retry() {
 # (Finder location -1,-1), so the signed app failed `codesign --verify --deep --strict` inside the
 # mounted DMG and after copying it out (#525). The volume name has no version: .DS_Store finds the
 # background through an alias that includes it.
-hdiutil_retry create -srcfolder "$STAGE" -volname "Документы и Таблицы" -fs HFS+ -format UDZO \
+hdiutil_retry create -srcfolder "$STAGE" -volname "FS Office" -fs HFS+ -format UDZO \
   -imagekey zlib-level=9 -ov "$DMG"
 sign "$DMG"
 codesign --verify --strict --verbose=2 "$DMG"
@@ -205,20 +205,20 @@ verify_dmg_app() {
   mkdir -p "$mount" "$copy"
   hdiutil_retry attach -readonly -nobrowse -noautoopen -mountpoint "$mount" "$dmg" >/dev/null
   echo "==> strict signature check of Lexicon.app inside $(basename "$dmg")"
-  codesign --verify --deep --strict --verbose=2 "$mount/Документы.app" || rc=1
+  codesign --verify --deep --strict --verbose=2 "$mount/Write.app" || rc=1
   if [ "$rc" = 0 ]; then
-    ditto "$mount/Документы.app" "$copy/Документы.app" || rc=1
+    ditto "$mount/Write.app" "$copy/Write.app" || rc=1
   fi
   if [ "$rc" = 0 ]; then
     echo "==> strict signature check of a ditto copy of it"
-    codesign --verify --deep --strict --verbose=2 "$copy/Документы.app" || rc=1
+    codesign --verify --deep --strict --verbose=2 "$copy/Write.app" || rc=1
   fi
   if [ "$rc" = 0 ] && [ "$NOTARIZE" = 1 ]; then
-    spctl --assess --type execute -vvv "$copy/Документы.app" || rc=1
+    spctl --assess --type execute -vvv "$copy/Write.app" || rc=1
   fi
   if [ "$rc" != 0 ]; then
     echo "error: Lexicon.app in $(basename "$dmg") fails strict verification; extended attributes:" >&2
-    xattr -lr "$mount/Документы.app" >&2 || true
+    xattr -lr "$mount/Write.app" >&2 || true
   fi
   hdiutil_retry detach "$mount" >/dev/null || hdiutil detach "$mount" -force >/dev/null || rc=1
   rm -rf "$copy"

@@ -7,11 +7,11 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>Документы</string>
+  <string>Write</string>
   <key>CFBundleName</key>
-  <string>Документы</string>
+  <string>Write</string>
   <key>CFBundleExecutable</key>
-  <string>Документы</string>
+  <string>Write</string>
   <key>CFBundleIdentifier</key>
   <string>io.github.arthuralend.lexicon</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -27,15 +27,15 @@
   <!-- Home › Dictate: macOS ends an app that uses the microphone or speech recognition without
        these. -->
   <key>NSMicrophoneUsageDescription</key>
-  <string>Документы listens to the microphone while you dictate text.</string>
+  <string>Write listens to the microphone while you dictate text.</string>
   <key>NSSpeechRecognitionUsageDescription</key>
-  <string>Документы turns your speech into text while you dictate.</string>
+  <string>Write turns your speech into text while you dictate.</string>
   <key>LexiconVersion</key>
   <string>@VERSION@</string>
   <key>LexiconBuildCommit</key>
   <string>@BUILD_SHA@</string>
   <key>CFBundleIconFile</key>
-  <string>Documents</string>
+  <string>Write</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.productivity</string>
   <!-- Must match MACOSX_DEPLOYMENT_TARGET in package.sh. Big Sur is the first release on
@@ -49,9 +49,9 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>FantasticSoft (armenoid@gmail.com). MIT OR Apache-2.0.</string>
+  <string>FantasticSoftware (armenoid@gmail.com). MIT OR Apache-2.0.</string>
 
-  <!-- Documents Lexicon opens (system type declarations). -->
+  <!-- Documents Write opens (system type declarations). -->
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>

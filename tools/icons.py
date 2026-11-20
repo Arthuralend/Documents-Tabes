@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Write FondOffice's app icons (needs Pillow).
 
-- The two apps' icons are the owner's pictures. Документы: pages with a red D and a fountain pen,
-  no tile, assets/app-icon/source/documents-pen.webp; `fit` scales the drawing to fill the icon
-  (on macOS too, as large as the icon allows). Таблицы: a page with a green T tile,
+- The two apps' icons are the owner's pictures. Документы: a cream tile with green and ochre
+  shapes and a page with a W, assets/app-icon/source/documents-w.webp, drawn on an opaque
+  background; `tile` cuts the rounded tile out with a smooth mask. Таблицы: a page with a green T tile,
   assets/app-icon/source/tables.webp; `cut` takes the rounded tile out of a picture (its faint
   shadow dropped, its body made opaque) and squares it.
 - The suite icon is the owner's picture assets/app-icon/source/office-pro-max.png: the installer's
@@ -42,6 +42,19 @@ def cut(path):
     alpha = tile.getchannel("A").point(lambda v: 0 if v <= lo else 255 if v >= hi else round((v - lo) * 255 / (hi - lo)))
     tile.putalpha(alpha)
     return tile.resize((1024, 1024), Image.LANCZOS)
+
+
+def tile(path, box, radius, size=1024):
+    """The rounded tile `box` (left, top, right, bottom, px) with corners of `radius` px, cut out
+    of the opaque picture at `path` with an anti-aliased mask, on a transparent `size` square."""
+    from PIL import ImageDraw
+
+    im = Image.open(path).convert("RGBA")
+    ss = 4
+    mask = Image.new("L", (im.width * ss, im.height * ss), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([v * ss for v in box], radius=radius * ss, fill=255)
+    im.putalpha(mask.resize(im.size, Image.LANCZOS))
+    return im.crop(box).resize((size, size), Image.LANCZOS)
 
 
 def fit(path, size=1024):
@@ -88,7 +101,7 @@ def hicolor(folder, app_id, src):
 def android(name, src):
     """An adaptive icon (the drawing as the foreground, inside the 66 dp safe zone, on a warm
     ivory) and a legacy icon for older launchers."""
-    cream = (0xFA, 0xF9, 0xF5, 255)
+    cream = src.getpixel((512, 40))[:3] + (255,)
     for dpi, scale in [("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4)]:
         folder = os.path.join(RES, f"mipmap-{dpi}")
         os.makedirs(folder, exist_ok=True)
@@ -99,10 +112,10 @@ def android(name, src):
 
 
 def main():
-    documents = fit(os.path.join(SRC, "documents-pen.webp"))
+    documents = tile(os.path.join(SRC, "documents-w.webp"), (88, 93, 1157, 1163), 205)
     tables = cut(os.path.join(SRC, "tables.webp"))
-    # macOS: the drawing as large as the icon allows, not inside Apple's 824 px grid.
-    write_set(DIR, "wordcraft", documents, documents)
+    # macOS: the tile a little larger than Apple's 824 px grid, so it reads big in the Dock.
+    write_set(DIR, "wordcraft", documents, framed(documents, 1024, 0.9))
     write_set(DIR, "sheets", tables)
     write_set(TABLES_DIR, "gridcraft", tables)
     hicolor(DIR, APP_ID, documents)

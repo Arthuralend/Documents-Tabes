@@ -137,7 +137,7 @@ fn nav(app: &mut WordApp, ui: &mut Ui) {
             app.session.find.results.clear();
         }
     }
-    // Документы: replace right here, under the search box (Word's Navigation pane only links to
+    // Write: replace right here, under the search box (Word's Navigation pane only links to
     // the Replace dialog). Replace takes the match that is selected and moves to the next one (the
     // first press selects the first match); Replace All takes every match in one undo step.
     let rid = egui::Id::new("nav_replace");
@@ -972,7 +972,7 @@ mod nav_replace_tests {
 
     use crate::WordApp;
 
-    /// Документы: the Navigation pane (Ctrl+F) replaces right under its search box, as Word's
+    /// Write: the Navigation pane (Ctrl+F) replaces right under its search box, as Word's
     /// Find and Replace does: Replace selects the first match, then replaces it and moves on;
     /// Replace All takes the rest.
     #[test]

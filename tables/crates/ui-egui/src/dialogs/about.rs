@@ -6,9 +6,9 @@ pub(super) fn about(ui: &mut egui::Ui, d: &mut Dialog) {
     // FondSoftware's Таблицы: the program and its developer; the licence texts ship with the app.
     let _ = &d.tab;
     ui.heading("Таблицы");
-    ui.label(egui::RichText::new("FondOffice Документы и таблицы").weak());
+    ui.label(egui::RichText::new("FS Office").weak());
     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
     ui.add_space(4.0);
-    ui.label("Spreadsheets of FondOffice. Developer: FondSoftware.");
+    ui.label("Spreadsheets of FS Office. Developer: FondSoftware.");
     ui.label(egui::RichText::new("Free software under the MIT or Apache-2.0 licence.").small().weak());
 }

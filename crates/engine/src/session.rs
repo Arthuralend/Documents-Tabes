@@ -650,7 +650,7 @@ impl Session {
             goal_x: None,
             page_hint: 0,
             registry: Arc::new(crate::cmd::registry()),
-            author: "FantasticSoft User".into(),
+            author: "FantasticSoftware User".into(),
             initials: String::new(),
             painter: None,
             status: String::new(),
@@ -1111,7 +1111,7 @@ impl Session {
 
     /// Replace the document (open/new).
     pub fn set_document(&mut self, mut doc: Document) {
-        // Документы (the app sets `new_first_line_indent`): no automatic hyphenation from a
+        // Write (the app sets `new_first_line_indent`): no automatic hyphenation from a
         // file's settings; Layout › Hyphenation turns it on.
         if self.new_first_line_indent.is_some() {
             doc.settings.auto_hyphenation = false;
@@ -1525,10 +1525,10 @@ pub fn set_first_line_indent(d: &mut Document, indent: f32) {
     }
 }
 
-/// Документы: the right margin of new documents, 1.5 cm in points.
+/// Write: the right margin of new documents, 1.5 cm in points.
 pub const NEW_RIGHT_MARGIN: f32 = 1.5 * wordcraft_geom::PT_PER_CM;
 
-/// Документы: a new document's own defaults: the first-line `indent` (points) and the
+/// Write: a new document's own defaults: the first-line `indent` (points) and the
 /// 1.5 cm right margin ([`NEW_RIGHT_MARGIN`]) of its one section.
 pub fn set_new_document_defaults(d: &mut Document, indent: f32) {
     set_first_line_indent(d, indent);

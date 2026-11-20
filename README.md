@@ -1,15 +1,15 @@
-<h1 align="center">FondOffice Документы и таблицы</h1>
+<h1 align="center">FS Office Write</h1>
 
 <p align="center">
   <b>Текстовый процессор с проверкой орфографии на русском и английском — для Android, Windows, macOS, Linux и браузера.</b><br>
   <i>A word processor with Russian and English spelling, for Android, Windows, macOS, Linux and the web.</i><br>
-  В пакет входят две программы: <b>Документы</b> (разработчик — <b>FantasticSoft</b>, armenoid@gmail.com)
-  и <b>Таблицы</b> (FondSoftware).
+  <b>Write</b> — текстовый процессор пакета <b>FS Office</b>. Разработчик — <b>FantasticSoftware</b>, armenoid@gmail.com.
+  В пакет входят также <b>Таблицы</b> (FondSoftware).
 </p>
 
-«Документы» основаны на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом
+Write основан на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом
 процессоре на Rust с интерфейсом в стиле Word (лента, стили, таблицы, рецензирование, `.docx`).
-Отличия «Документов»:
+Отличия Write:
 
 - **Русская орфография из коробки.** Словарь `ru_RU` (LibreOffice, автор — А. И. Лебедев,
   лицензия BSD) встроен в программу. В WordCraft русский проверялся только при установленном в
@@ -50,10 +50,10 @@
 
 ## Установка на Android
 
-1. Скачайте APK на телефон по прямой ссылке: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents.apk** — там всегда последняя сборка.
-2. Откройте скачанный `FondOffice-Documents.apk`. Разрешите установку из
+1. Скачайте APK на телефон по прямой ссылке: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-Write.apk** — там всегда последняя сборка.
+2. Откройте скачанный `FS-Office-Write.apk`. Разрешите установку из
    этого источника, когда телефон спросит.
-3. При первом запуске «Документы» попросят доступ к файлам — тогда документы можно открывать и
+3. При первом запуске Write попросит доступ к файлам — тогда документы можно открывать и
    сохранять в папках «Документы» и «Загрузки». Без доступа документы хранятся в папке
    приложения (`Android/data/io.github.arthuralend.lexicon/files`).
 
@@ -62,23 +62,23 @@
 
 ## Установка на Windows
 
-1. Скачайте установщик: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-Windows.msi**
-   (или версию без установки: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-Windows-portable.zip**).
-2. Запустите `FondOffice-Documents-Windows.msi`. Если Windows покажет «Система Windows защитила ваш компьютер»,
+1. Скачайте установщик: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-Windows.msi**
+   (или версию без установки: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-Windows-portable.zip**).
+2. Запустите `FS-Office-Windows.msi`. Если Windows покажет «Система Windows защитила ваш компьютер»,
    нажмите «Подробнее» → «Выполнить в любом случае»: установщик не подписан платным сертификатом.
-3. «Документы» и «Таблицы» появятся в меню «Пуск». Для документов Word «Документы» можно выбрать в
-   «Файл › Параметры › Общие › Сделать Документы приложением по умолчанию».
+3. Write и «Таблицы» появятся в меню «Пуск». Для документов Word Write можно выбрать в
+   «Файл › Параметры › Общие › Сделать Write приложением по умолчанию».
 
 Требования: Windows 10 или 11, 64-разрядная.
 
 ## Установка на macOS
 
-1. Скачайте **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FondOffice-Documents-macOS.dmg**,
-   откройте его и перетащите «Документы» и «Таблицы» в «Программы».
+1. Скачайте **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-macOS.dmg**,
+   откройте его и перетащите Write и «Таблицы» в «Программы».
 2. Приложение не заверено Apple, поэтому при первом запуске macOS его не откроет. Откройте
    «Системные настройки › Конфиденциальность и безопасность» и нажмите «Всё равно открыть» рядом
    с сообщением о программе. Если macOS пишет, что приложение «повреждено», выполните в Терминале:
-   `xattr -dr com.apple.quarantine /Applications/Документы.app /Applications/Таблицы.app`
+   `xattr -dr com.apple.quarantine /Applications/Write.app /Applications/Таблицы.app`
 
 Требования: macOS 11 (Big Sur) или новее, Apple Silicon или Intel.
 
@@ -120,14 +120,14 @@ APK подписывается ключом `android/app/lexicon.keystore`, ко
 
 ## Лицензия
 
-FondOffice Документы и таблицы, как и WordCraft, распространяется по лицензии [MIT](LICENSE-MIT) или
+FS Office Write, как и WordCraft, распространяется по лицензии [MIT](LICENSE-MIT) или
 [Apache-2.0](LICENSE-APACHE) на ваш выбор. Copyright (c) 2026 ArtCraft Team и участники проектов
-WordCraft и FondOffice (FondSoftware); обязательные уведомления — в [NOTICE](NOTICE).
+WordCraft и FS Office (FantasticSoftware); обязательные уведомления — в [NOTICE](NOTICE).
 
 Встроенные шрифты, словари и прочие ресурсы сохраняют свои лицензии; каждый указан в
 [ATTRIBUTION.md](ATTRIBUTION.md). Русский словарь: Copyright (c) 1997–2008 Alexander I. Lebedev,
 лицензия в [`assets/spelling/README_ru_RU.txt`](assets/spelling/README_ru_RU.txt). Английский
 словарь и переносы — общественное достояние (Moby Hyphenator II, Grady Ward).
 
-FondOffice — независимый проект FondSoftware, не связанный с ArtCraft, Microsoft или Adobe. Логотипы ArtCraft
+FS Office — независимый проект FantasticSoftware, не связанный с ArtCraft, Microsoft или Adobe. Логотипы ArtCraft
 из репозитория WordCraft удалены, как того требует их лицензия.

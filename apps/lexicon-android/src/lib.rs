@@ -41,7 +41,7 @@ fn android_main(app: AndroidApp) {
     let android = app.clone();
     let options = eframe::NativeOptions { android_app: Some(app), ..Default::default() };
     let result = eframe::run_native(
-        "Документы",
+        "Write",
         options,
         Box::new(move |cc| {
             keyboard::set_context(cc.egui_ctx.clone());
@@ -69,7 +69,7 @@ fn android_main(app: AndroidApp) {
                 let doc = app.session.blank_document();
                 app.session.set_document(doc);
             }
-            // Документы opens on a new document.
+            // Write opens on a new document.
             if app.ui.tab == "Calculations" {
                 app.ui.tab = "Home".into();
             }
@@ -78,7 +78,7 @@ fn android_main(app: AndroidApp) {
         }),
     );
     if let Err(e) = result {
-        log::error!("Документы failed to start: {e}");
+        log::error!("Write failed to start: {e}");
     }
 }
 

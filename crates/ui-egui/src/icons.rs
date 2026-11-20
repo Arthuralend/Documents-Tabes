@@ -118,7 +118,7 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
         // Clipboard
         "paste" => {
             // A warm clipboard board with its clip, and a written page with a folded corner laid
-            // over it (Документы' own drawing).
+            // over it (Write's own drawing).
             let board = Color32::from_rgb(0xC9, 0x8B, 0x5A);
             pen.frrect(2.5, 3.5, 14.0, 18.0, 2.2, board.linear_multiply(0.38));
             pen.rrect(2.5, 3.5, 14.0, 18.0, 2.2, c);
@@ -135,7 +135,7 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
             pen.line_c(&[(10.8, 13.6), (15.4, 13.6)], c);
             pen.line_c(&[(10.8, 16.2), (14.0, 16.2)], c);
         }
-        // Документы: Save as PDF — a page with a folded corner and a red PDF band.
+        // Write: Save as PDF — a page with a folded corner and a red PDF band.
         "pdf" => {
             pen.page(4.0, 2.0, 16.0, 18.0);
             pen.frrect(2.0, 10.0, 18.0, 16.0, 1.4, red);

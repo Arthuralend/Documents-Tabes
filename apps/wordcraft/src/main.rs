@@ -47,7 +47,7 @@ impl eframe::App for App {
         #[cfg(target_os = "macos")]
         apple_events::poll(&self.4, &mut self.0, ctx);
         self.0.logic(ctx);
-        // Документы: say which file this window has, and come forward when another window
+        // Write: say which file this window has, and come forward when another window
         // was asked to open it (`open_windows`).
         {
             use std::sync::Mutex;
@@ -437,7 +437,7 @@ fn main() -> eframe::Result {
     if let Some(logger) = logger {
         match log_dir().filter(|_| prefs_enabled()) {
             Some(dir) => match logger.attach_dir(&dir) {
-                Ok(path) => log::info!("Документы {} ({}), log file {}", env!("CARGO_PKG_VERSION"), build_sha(), path.display()),
+                Ok(path) => log::info!("Write {} ({}), log file {}", env!("CARGO_PKG_VERSION"), build_sha(), path.display()),
                 // Standard error only by now (`attach_dir` gave up on the file); unlike `eprintln!`, never panics.
                 Err(e) => log::warn!("no log file: {e}"),
             },
@@ -446,10 +446,10 @@ fn main() -> eframe::Result {
     }
     let mut options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Документы")
+            .with_title("Write")
             .with_app_id("ai.storyteller.wordcraft")
             .with_inner_size([1440.0, 920.0])
-            .with_min_inner_size([760.0, 480.0])
+            .with_min_inner_size(wordcraft_ui_egui::window_geometry::MIN_SIZE)
             .with_drag_and_drop(true)
             .with_fullsize_content_view(true)
             .with_titlebar_shown(false)
@@ -489,7 +489,7 @@ fn main() -> eframe::Result {
     #[cfg(target_os = "macos")]
     let apple_events = &apple_events;
     eframe::run_native(
-        "Документы",
+        "Write",
         options,
         Box::new(move |cc| {
             // The system region picks the new document's paper, the units and the decimal
@@ -499,7 +499,7 @@ fn main() -> eframe::Result {
             let (file_dialog, dialogs) = file_dialogs::hook(&cc.egui_ctx);
             let mut session = Session::new(doc);
             session.system_region = region;
-            // Документы: new documents start with a 1 cm first-line indent and a 1.5 cm right margin.
+            // Write: new documents start with a 1 cm first-line indent and a 1.5 cm right margin.
             session.new_first_line_indent = Some(wordcraft_engine::NEW_FIRST_LINE_INDENT);
             if !sample {
                 wordcraft_engine::set_new_document_defaults(&mut session.doc, wordcraft_engine::NEW_FIRST_LINE_INDENT);
@@ -539,7 +539,7 @@ fn main() -> eframe::Result {
             // Nothing to open (no files, no sample, no control channel driving the editor): start
             // on File › Home, as Word does (#766), unless the Start screen option is off. Files
             // macOS hands over later open on top of it and close it (`apple_events`).
-            // Документы opens on a new document, never the Start screen; a tab stored by an
+            // Write opens on a new document, never the Start screen; a tab stored by an
             // older version (the removed Calculations) gives way to Home.
             if app.ui.tab == "Calculations" {
                 app.ui.tab = "Home".into();

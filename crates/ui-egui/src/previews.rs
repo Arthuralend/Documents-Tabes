@@ -573,7 +573,7 @@ pub fn style_gallery(app: &mut WordApp, ui: &mut Ui, state: &Value) {
         });
         if resp.on_hover_text(name).clicked() {
             let _ = app.run("para.style", json!({"style": id}));
-            // Typing goes on in the document; the Styles drop-down (Документы) closes.
+            // Typing goes on in the document; the Styles drop-down (Write) closes.
             app.canvas.want_focus = true;
             ui.close();
         }

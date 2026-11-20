@@ -19,11 +19,11 @@ use crate::WordApp;
 use crate::options::MeasureExt;
 use crate::theme::{Tokens, semibold};
 
-/// How to reach Документы' developer, FantasticSoft (About).
+/// How to reach Write's developer, FantasticSoftware (About).
 pub const DEVELOPER_EMAIL: &str = "armenoid@gmail.com";
 
-/// The suite Документы belongs to (with Таблицы): a brand name, never translated.
-pub const SUITE_NAME: &str = "FondOffice Документы и таблицы";
+/// Write's full name, in the FS Office suite: a brand name, never translated.
+pub const SUITE_NAME: &str = "FS Office Write";
 
 /// The Find and Replace dialog's search options beyond the first row (#543).
 #[derive(Clone, Debug, Default, Serialize)]
@@ -1445,8 +1445,8 @@ pub fn show(app: &mut WordApp, ctx: &egui::Context) {
         Dialog::Refs(d) => d.title(),
         Dialog::Icons { .. } => "Icons",
         Dialog::PasteSpecial { .. } => "Paste Special",
-        Dialog::About { .. } => "About Документы",
-        Dialog::SaveChanges { .. } => "Документы",
+        Dialog::About { .. } => "About Write",
+        Dialog::SaveChanges { .. } => "Write",
         Dialog::DiscardRecovery { .. } => "Discard recovery copy",
         Dialog::RecipientList { .. } => "Recipient List",
         Dialog::SelectTable { .. } => "Select Table",
@@ -2680,7 +2680,7 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             *tab = 0;
             {
                 {
-                    ui.label(egui::RichText::new(tl!("Документы")).font(semibold(22.0)));
+                    ui.label(egui::RichText::new(tl!("Write")).font(semibold(22.0)));
                     // The suite's name, a brand: the same in every language.
                     ui.label(egui::RichText::new(SUITE_NAME).weak());
                     let build = option_env!("WORDCRAFT_BUILD_SHA").map(|s| s.get(..8).unwrap_or(s)).unwrap_or(tl!("development build"));
@@ -2690,7 +2690,7 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                     ui.hyperlink_to(tl!("Source code: github.com/Arthuralend/Documents-Tabes"), "https://github.com/Arthuralend/Documents-Tabes");
                     ui.add_space(6.0);
                     // The licence texts, with their copyright notices, ship with the app.
-                    ui.label(tl!("Developer: FantasticSoft"));
+                    ui.label(tl!("Developer: FantasticSoftware"));
                     ui.hyperlink_to(DEVELOPER_EMAIL, format!("mailto:{DEVELOPER_EMAIL}"));
                     ui.label(egui::RichText::new(tl!("Free software under the MIT or Apache-2.0 licence.")).small().weak());
                 }
@@ -2846,7 +2846,7 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             });
             ui.label(
                 egui::RichText::new(tl!(
-                    "Keep the password somewhere safe: without it nobody, Документы included, can open the document. Leave both boxes empty to remove the password."
+                    "Keep the password somewhere safe: without it nobody, Write included, can open the document. Leave both boxes empty to remove the password."
                 ))
                 .small()
                 .weak(),

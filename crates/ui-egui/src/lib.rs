@@ -281,6 +281,8 @@ pub struct UiState {
     /// Toolbar takes it away; Show Quick Access Toolbar (the ribbon's right-click menu, Customize
     /// Ribbon › Quick Access Toolbar) brings it back. Kept between runs.
     pub quick_access_toolbar: bool,
+    /// Write: a faint paper grain on the pages, on screen only (View › Paper Texture).
+    pub paper_texture: bool,
     pub recent: Vec<String>,
     /// Symbols inserted from the Symbol dialog, most recent first (#321).
     pub recent_symbols: Vec<dialogs_insert::RecentSymbol>,
@@ -404,6 +406,7 @@ impl Default for UiState {
             print: print_page::PrintSettings::default(),
             ribbon_collapsed: false,
             quick_access_toolbar: true,
+            paper_texture: true,
             recent: Vec::new(),
             recent_symbols: Vec::new(),
             recent_colors: Vec::new(),
@@ -907,7 +910,7 @@ impl WordApp {
     /// Close, Envelopes, Labels and Finish & Merge on a document with unsaved changes first ask
     /// Save / Don't Save / Cancel, and the command runs once that is answered (`ui.saveChanges`).
     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
-        // Документы: a file opens once, as in Word: the window that has it comes forward.
+        // Write: a file opens once, as in Word: the window that has it comes forward.
         if id == "file.open"
             && let Some(path) = params.get("path").and_then(Value::as_str)
         {
@@ -924,7 +927,7 @@ impl WordApp {
                 return Ok(json!({"inAnotherWindow": true}));
             }
         }
-        // Документы: with a document already open, another one (or File › New) gets a window of
+        // Write: with a document already open, another one (or File › New) gets a window of
         // its own, as in Word, instead of replacing it.
         if matches!(id, "file.open" | "file.new")
             && self.document_in_use()
@@ -1635,6 +1638,16 @@ impl WordApp {
                 self.ui.ribbon_collapsed = !self.ui.ribbon_collapsed;
                 json!({"collapsed": self.ui.ribbon_collapsed})
             }
+            "ui.paperTexture" => {
+                // Write: `value` true shows the paper grain on the pages, false plain white;
+                // no value toggles it. On screen only: PDF, print and the file never have it.
+                match p.get("value") {
+                    None => self.ui.paper_texture = !self.ui.paper_texture,
+                    Some(Value::Bool(on)) => self.ui.paper_texture = *on,
+                    Some(_) => return Some(Err("`value` must be true or false".into())),
+                }
+                json!({"paperTexture": self.ui.paper_texture})
+            }
             "ui.quickAccessToolbar" => {
                 // Hide Quick Access Toolbar (its menu) and Show Quick Access Toolbar (the ribbon's
                 // right-click menu, Customize Ribbon), #1945: `value` true shows the toolbar in
@@ -1794,8 +1807,7 @@ impl WordApp {
             // MCP get an error.
             "ui.makeDefaultApp" => {
                 return Some(Err(
-                    "making Документы the default app needs a click in File › Options › General; scripts and agents can't change system defaults"
-                        .into(),
+                    "making Write the default app needs a click in File › Options › General; scripts and agents can't change system defaults".into(),
                 ));
             }
             "ui.caretAnimation" => {
@@ -1857,20 +1869,20 @@ impl WordApp {
     /// command, so nothing programmatic (control channel, MCP, macros) can change system defaults.
     pub(crate) fn make_default_app(&mut self) -> Result<Value, String> {
         let Some(hook) = self.services.make_default_app.as_ref() else {
-            return Err("Документы can't change the default apps here; use your system's settings".into());
+            return Err("Write can't change the default apps here; use your system's settings".into());
         };
         match hook() {
             Ok(DefaultApp::SettingsOpened) => {
-                self.status(tl!("In Default apps, choose Документы for the document types you want it to open."));
+                self.status(tl!("In Default apps, choose Write for the document types you want it to open."));
                 Ok(json!({"settingsOpened": true}))
             }
             Ok(DefaultApp::MadeDefault) => {
-                self.status(tl!("Документы is now the default app for Word documents."));
+                self.status(tl!("Write is now the default app for Word documents."));
                 Ok(json!({"default": true}))
             }
             Err(e) => {
                 log::warn!("make default app: {e}");
-                let msg = i18n::fmt(tl!("Couldn't make Документы the default: {error}"), &[("error", &e)]);
+                let msg = i18n::fmt(tl!("Couldn't make Write the default: {error}"), &[("error", &e)]);
                 self.status(msg.clone());
                 Err(msg)
             }
@@ -2165,7 +2177,7 @@ impl WordApp {
         }
         if !self.recovery_seen && self.session.recovery_ready() {
             self.recovery_seen = true;
-            // Документы always starts on a new document: recovery copies wait in File › Recover,
+            // Write always starts on a new document: recovery copies wait in File › Recover,
             // and the status line says so.
             if !self.session.recovery_documents().is_empty() {
                 self.status(tl!("Unsaved copies can be restored in File › Recover."));
@@ -2396,9 +2408,9 @@ impl WordApp {
             ctx.open_url(egui::OpenUrl::new_tab(url));
         }
         let title = if self.has_document() {
-            format!("{}{} - {}", self.title_stem(), if self.session.dirty { " •" } else { "" }, tl!("Документы"))
+            format!("{}{} - {}", self.title_stem(), if self.session.dirty { " •" } else { "" }, tl!("Write"))
         } else {
-            tl!("Документы").to_string()
+            tl!("Write").to_string()
         };
         if title != self.sent_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
@@ -2756,6 +2768,7 @@ pub(crate) fn works_without_document(id: &str) -> bool {
             | "ui.closeDialog"
             | "ui.collapseRibbon"
             | "ui.quickAccessToolbar"
+            | "ui.paperTexture"
             | "ui.keytips"
             | "ui.dark"
             | "ui.theme"
@@ -3013,7 +3026,7 @@ mod tests {
         assert!(plain.status_msg.as_ref().is_some_and(|(m, _)| !m.is_empty()), "a hint where nothing can listen");
     }
 
-    /// Документы: a second document opens in a window of its own; into an untouched blank
+    /// Write: a second document opens in a window of its own; into an untouched blank
     /// document it opens in place.
     #[test]
     fn a_second_document_opens_in_a_new_window() {
@@ -3217,7 +3230,7 @@ mod tests {
         let a = h.state_mut();
         assert!(!a.ui.backstage, "Esc leaves the Start screen");
         assert!(!a.has_document(), "for an empty window, not a blank document");
-        assert_eq!(a.sent_title, "Документы", "the window is titled with the app alone");
+        assert_eq!(a.sent_title, "Write", "the window is titled with the app alone");
         // The ribbon's commands are off, but Help, the File tab and the settings work.
         for id in ["format.bold", "text.insert", "file.save", "file.saveAs", "file.print", "edit.paste", "insert.table", "ui.print"] {
             assert!(!widgets::enabled(a, id), "{id} is off with no document");
@@ -5554,7 +5567,7 @@ mod tests {
     #[test]
     fn the_default_app_button_shows_only_with_the_hosts_hook() {
         use egui_kittest::kittest::Queryable;
-        const LABEL: &str = "Make Документы the default for Word documents…";
+        const LABEL: &str = "Make Write the default for Word documents…";
         for hook in [false, true] {
             let calls = std::rc::Rc::new(std::cell::Cell::new(0));
             let mut a = app();
@@ -5575,7 +5588,7 @@ mod tests {
                 a,
             );
             h.run_steps(4);
-            assert!(h.query_by_label("Show the Start screen when Документы starts").is_some(), "hook {hook}: the Options page rendered");
+            assert!(h.query_by_label("Show the Start screen when Write starts").is_some(), "hook {hook}: the Options page rendered");
             assert_eq!(h.query_by_label(LABEL).is_some(), hook, "hook {hook}: the button");
             if hook {
                 h.get_by_label(LABEL).click();
@@ -5712,7 +5725,7 @@ mod tests {
         }
         assert!(h.state().canvas.focused, "the page starts with keyboard focus");
 
-        // A Styles gallery tile (Документы: in the Styles button's drop-down).
+        // A Styles gallery tile (Write: in the Styles button's drop-down).
         h.get_by_role_and_label(Role::Button, "Styles").click();
         for _ in 0..3 {
             h.step();

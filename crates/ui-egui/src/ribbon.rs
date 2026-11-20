@@ -241,7 +241,7 @@ pub fn plan_strip(tabs: &[TabSpec], buttons: [f32; 3], avail: f32, more: f32) ->
     StripPlan { pad, buttons: level, fits, widths }
 }
 
-/// Built-in tabs Документы leaves out of the ribbon (their commands still run from shortcuts,
+/// Built-in tabs Write leaves out of the ribbon (their commands still run from shortcuts,
 /// search and the control channel).
 pub(crate) const HIDDEN_TABS: [&str; 6] = ["Developer", "Zotero", "Help", "References", "Mailings", "Review"];
 
@@ -283,7 +283,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
     // Format) may be stored while the selection moved away, and a tab may have been hidden.
     let user_tabs = app.session.ribbon.tabs().into_owned();
     let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
-    // Документы: no Developer, Zotero, Help, References, Mailings or Review tab (reviewing is the
+    // Write: no Developer, Zotero, Help, References, Mailings or Review tab (reviewing is the
     // Editing/Reviewing switch at the top right; spelling is F7).
     tabs.extend(user_tabs.iter().filter(|e| !e.hidden && (e.custom || !HIDDEN_TABS.contains(&e.name.as_str()))).map(|e| (e.name.clone(), e.custom)));
     for ct in contextual_tabs(&app.session) {
@@ -308,7 +308,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
         .show(ui, |ui| {
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing = vec2(2.0, 0.0);
-                // Документы: the Editing/Reviewing switch keeps its room (no Share or Comments
+                // Write: the Editing/Reviewing switch keeps its room (no Share or Comments
                 // button); the tabs get what is left of it (#897, #2026), and the switch gives up
                 // its label before a tab is drawn over it.
                 let editing_label = if app.session.doc.settings.track_changes { tl!("Reviewing") } else { tl!("Editing") };
@@ -923,7 +923,85 @@ fn painter_double_click(app: &mut WordApp) {
     let _ = app.run("edit.formatPainter", json!({"sticky": true}));
 }
 
-/// Документы: the two rows of the Font and Paragraph groups sit in the ribbon's height like the
+/// Bullets, Numbering and Multilevel List, each with its library (Home › Paragraph).
+fn list_buttons(ui: &mut Ui, app: &mut WordApp) {
+    let rp = app.session.doc.para_at(&app.session.sel.focus).map(|p| app.session.doc.styles.resolve_para(&p.props));
+    let lists = wordcraft_engine::cmd::para::list_buttons(&app.session.doc, rp.as_ref().and_then(|r| r.numbering));
+    split(ui, app, "bullets", "Bullets", "para.bullets", json!({}), lists.bullets, None, |ui, app| {
+        ui.label(egui::RichText::new(tl!("Bullet Library")).small().weak());
+        ui.horizontal(|ui| {
+            for c in ["•", "○", "▪", "◆", "➢", "✓", "–"] {
+                // The interface fonts have no ➢, so its tile draws the arrowhead.
+                let label = if c == "➢" { " " } else { c };
+                let resp = ui.button(egui::RichText::new(label).size(16.0));
+                if c == "➢" {
+                    let m = resp.rect.center();
+                    let pts = [(-4.0, -5.0), (5.0, 0.0), (-4.0, 5.0), (-1.5, 0.0)].map(|(x, y)| m + vec2(x, y));
+                    ui.painter().add(egui::Shape::convex_polygon(vec![pts[0], pts[1], pts[3]], Tokens::get(ui.ctx()).text, Stroke::NONE));
+                    ui.painter().add(egui::Shape::convex_polygon(vec![pts[3], pts[1], pts[2]], Tokens::get(ui.ctx()).text, Stroke::NONE));
+                }
+                if resp.clicked() {
+                    let _ = app.run("para.bullets", json!({"kind": c}));
+                    ui.close();
+                }
+            }
+        });
+        mi(ui, app, "None", "para.bullets", json!({"off": true}));
+    });
+    split(ui, app, "numbering", "Numbering", "para.numbering", json!({}), lists.numbering, None, |ui, app| {
+        for (l, k) in [
+            ("1. 2. 3.", "numbered"),
+            ("1) 2) 3)", "numberedParen"),
+            ("I. II. III.", "outline"),
+            ("A. B. C.", "upperLetter"),
+            ("a) b) c)", "lowerLetter"),
+            ("i. ii. iii.", "lowerRoman"),
+        ] {
+            mi(ui, app, l, "para.numbering", json!({"kind": k}));
+        }
+        ui.separator();
+        mi(ui, app, "Restart at 1", "para.restartNumbering", json!({}));
+        mi(ui, app, "None", "para.numbering", json!({"off": true}));
+    });
+    split(ui, app, "multilevel", "Multilevel List", "para.multilevel", json!({}), lists.multilevel, None, |ui, app| {
+        mi(ui, app, "1. 1.1. 1.1.1.", "para.multilevel", json!({"kind": "legal"}));
+        mi(ui, app, "I. A. 1. a.", "para.multilevel", json!({"kind": "outline"}));
+        ui.separator();
+        // Lists linked to the heading styles: the headings carry the numbers. Each item
+        // reads as its first three levels, number then (translated) style name.
+        for (numbers, k) in [
+            (["1", "1.1", "1.1.1"], "headings"),
+            (["Article I.", "Section 1.01", "(a)"], "article"),
+            (["I.", "A.", "1."], "outlineHeadings"),
+            (["Chapter 1", "", ""], "chapter"),
+        ] {
+            let text = numbers
+                .iter()
+                .zip(["Heading 1", "Heading 2", "Heading 3"])
+                .map(|(n, h)| if n.is_empty() { tl!(h).to_string() } else { format!("{} {}", tl!(n), tl!(h)) })
+                .collect::<Vec<_>>()
+                .join(" / ");
+            mi_text(ui, app, &text, "list.multilevelPreset", json!({"preset": k}));
+        }
+        ui.separator();
+        mi(ui, app, "Define New Multilevel List…", "list.define", json!({}));
+        ui.separator();
+        for lv in 0..5u64 {
+            mi(ui, app, &format!("Change to Level {}", lv + 1), "para.listLevel", json!({"level": lv}));
+        }
+    });
+}
+
+/// Align Left, Center, Align Right and Justify, `align` (as seen on the page) checked.
+fn align_buttons(ui: &mut Ui, app: &mut WordApp, align: wordcraft_doc::Align) {
+    use wordcraft_doc::Align as A;
+    small(ui, app, "alignLeft", None, "Align Left", "para.alignLeft", json!({}), align == A::Left);
+    small(ui, app, "alignCenter", None, "Center", "para.alignCenter", json!({}), align == A::Center);
+    small(ui, app, "alignRight", None, "Align Right", "para.alignRight", json!({}), align == A::Right);
+    small(ui, app, "justify", None, "Justify", "para.justify", json!({}), align == A::Justify);
+}
+
+/// Write: the two rows of the Font and Paragraph groups sit in the ribbon's height like the
 /// owner's design: this much room above the first row and between the rows.
 const ROW_TOP: f32 = 6.0;
 const ROW_GAP: f32 = 8.0;
@@ -1057,84 +1135,22 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
         .map(|p| app.session.doc.styles.resolve_para(&p.props))
         .map(|r| r.align.visual(r.bidi))
         .unwrap_or_default();
-    // Документы: in a narrow window the four alignments stay, one under another, and ▼ under them
+    // Write: in a narrow window the four alignments stay, one under another, and ▼ under them
     // opens the rest of the group.
     let narrow = |ui: &mut Ui, app: &mut WordApp| {
-        use wordcraft_doc::Align as A;
-        crate::widgets::mini(ui, app, "alignLeft", "Align Left", "para.alignLeft", json!({}), align == A::Left);
-        crate::widgets::mini(ui, app, "alignCenter", "Center", "para.alignCenter", json!({}), align == A::Center);
-        crate::widgets::mini(ui, app, "alignRight", "Align Right", "para.alignRight", json!({}), align == A::Right);
-        crate::widgets::mini(ui, app, "justify", "Justify", "para.justify", json!({}), align == A::Justify);
+        // The lists and the four alignments keep their size; the rest is under ▾.
+        stack(ui, |ui| {
+            ui.add_space(ROW_TOP);
+            crate::widgets::row(ui, |ui| list_buttons(ui, app));
+            ui.add_space(ROW_GAP);
+            crate::widgets::row(ui, |ui| align_buttons(ui, app, align));
+        });
     };
     crate::widgets::group_narrow(ui, "Paragraph", Some("para.dialog"), app, narrow, |ui, app| {
-        let rp = app.session.doc.para_at(&app.session.sel.focus).map(|p| app.session.doc.styles.resolve_para(&p.props));
-        let lists = wordcraft_engine::cmd::para::list_buttons(&app.session.doc, rp.as_ref().and_then(|r| r.numbering));
         stack(ui, |ui| {
             ui.add_space(ROW_TOP);
             crate::widgets::row(ui, |ui| {
-                split(ui, app, "bullets", "Bullets", "para.bullets", json!({}), lists.bullets, None, |ui, app| {
-                    ui.label(egui::RichText::new(tl!("Bullet Library")).small().weak());
-                    ui.horizontal(|ui| {
-                        for c in ["•", "○", "▪", "◆", "➢", "✓", "–"] {
-                            // The interface fonts have no ➢, so its tile draws the arrowhead.
-                            let label = if c == "➢" { " " } else { c };
-                            let resp = ui.button(egui::RichText::new(label).size(16.0));
-                            if c == "➢" {
-                                let m = resp.rect.center();
-                                let pts = [(-4.0, -5.0), (5.0, 0.0), (-4.0, 5.0), (-1.5, 0.0)].map(|(x, y)| m + vec2(x, y));
-                                ui.painter().add(egui::Shape::convex_polygon(vec![pts[0], pts[1], pts[3]], Tokens::get(ui.ctx()).text, Stroke::NONE));
-                                ui.painter().add(egui::Shape::convex_polygon(vec![pts[3], pts[1], pts[2]], Tokens::get(ui.ctx()).text, Stroke::NONE));
-                            }
-                            if resp.clicked() {
-                                let _ = app.run("para.bullets", json!({"kind": c}));
-                                ui.close();
-                            }
-                        }
-                    });
-                    mi(ui, app, "None", "para.bullets", json!({"off": true}));
-                });
-                split(ui, app, "numbering", "Numbering", "para.numbering", json!({}), lists.numbering, None, |ui, app| {
-                    for (l, k) in [
-                        ("1. 2. 3.", "numbered"),
-                        ("1) 2) 3)", "numberedParen"),
-                        ("I. II. III.", "outline"),
-                        ("A. B. C.", "upperLetter"),
-                        ("a) b) c)", "lowerLetter"),
-                        ("i. ii. iii.", "lowerRoman"),
-                    ] {
-                        mi(ui, app, l, "para.numbering", json!({"kind": k}));
-                    }
-                    ui.separator();
-                    mi(ui, app, "Restart at 1", "para.restartNumbering", json!({}));
-                    mi(ui, app, "None", "para.numbering", json!({"off": true}));
-                });
-                split(ui, app, "multilevel", "Multilevel List", "para.multilevel", json!({}), lists.multilevel, None, |ui, app| {
-                    mi(ui, app, "1. 1.1. 1.1.1.", "para.multilevel", json!({"kind": "legal"}));
-                    mi(ui, app, "I. A. 1. a.", "para.multilevel", json!({"kind": "outline"}));
-                    ui.separator();
-                    // Lists linked to the heading styles: the headings carry the numbers. Each item
-                    // reads as its first three levels, number then (translated) style name.
-                    for (numbers, k) in [
-                        (["1", "1.1", "1.1.1"], "headings"),
-                        (["Article I.", "Section 1.01", "(a)"], "article"),
-                        (["I.", "A.", "1."], "outlineHeadings"),
-                        (["Chapter 1", "", ""], "chapter"),
-                    ] {
-                        let text = numbers
-                            .iter()
-                            .zip(["Heading 1", "Heading 2", "Heading 3"])
-                            .map(|(n, h)| if n.is_empty() { tl!(h).to_string() } else { format!("{} {}", tl!(n), tl!(h)) })
-                            .collect::<Vec<_>>()
-                            .join(" / ");
-                        mi_text(ui, app, &text, "list.multilevelPreset", json!({"preset": k}));
-                    }
-                    ui.separator();
-                    mi(ui, app, "Define New Multilevel List…", "list.define", json!({}));
-                    ui.separator();
-                    for lv in 0..5u64 {
-                        mi(ui, app, &format!("Change to Level {}", lv + 1), "para.listLevel", json!({"level": lv}));
-                    }
-                });
+                list_buttons(ui, app);
                 crate::widgets::vsep(ui);
                 small(ui, app, "outdent", None, "Decrease Indent", "para.outdent", json!({}), false);
                 small(ui, app, "indent", None, "Increase Indent", "para.indent", json!({}), false);
@@ -1146,11 +1162,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             });
             ui.add_space(ROW_GAP);
             crate::widgets::row(ui, |ui| {
-                use wordcraft_doc::Align as A;
-                small(ui, app, "alignLeft", None, "Align Left", "para.alignLeft", json!({}), align == A::Left);
-                small(ui, app, "alignCenter", None, "Center", "para.alignCenter", json!({}), align == A::Center);
-                small(ui, app, "alignRight", None, "Align Right", "para.alignRight", json!({}), align == A::Right);
-                small(ui, app, "justify", None, "Justify", "para.justify", json!({}), align == A::Justify);
+                align_buttons(ui, app, align);
                 crate::widgets::vsep(ui);
                 menu_button(ui, app, "lineSpacing", None, "Line and Paragraph Spacing", false, "para.lineSpacing", |ui, app| {
                     for v in [1.0, 1.15, 1.5, 2.0, 2.5, 3.0] {
@@ -1227,7 +1239,7 @@ fn home(app: &mut WordApp, ui: &mut Ui) {
             }
         });
     });
-    // Документы: no Editor group (spelling is F7).
+    // Write: no Editor group (spelling is F7).
 }
 
 fn insert(app: &mut WordApp, ui: &mut Ui) {
@@ -2144,6 +2156,11 @@ fn view(app: &mut WordApp, ui: &mut Ui) {
             let mut w = v.hide_white_space;
             if ui.checkbox(&mut w, tl!("Hide White Space")).changed() {
                 let _ = app.run("view.hideWhiteSpace", json!({"value": w}));
+            }
+            // Write: the paper's grain on screen (never in PDF or print).
+            let mut paper = app.ui.paper_texture;
+            if ui.checkbox(&mut paper, tl!("Paper Texture")).changed() {
+                let _ = app.run("ui.paperTexture", json!({"value": paper}));
             }
         });
     });
@@ -3235,7 +3252,7 @@ mod tests {
                 );
                 h.run_steps(3);
                 let buttons: Vec<Rect> = [tl!("Editing")].iter().filter_map(|b| h.query_by_label(b).map(|n| n.rect())).collect();
-                // Документы: the Editing/Reviewing switch is the strip's only button.
+                // Write: the Editing/Reviewing switch is the strip's only button.
                 assert_eq!(buttons.len(), 1, "{lang} {width}: the Editing switch is on the strip");
                 assert!(buttons.iter().all(|b| b.right() <= width + 0.5 && b.left() >= 0.0), "{lang} {width}: buttons inside {buttons:?}");
                 for tab in crate::ribbon::TABS.iter().copied().chain(["Table Design", "Table Layout"]) {

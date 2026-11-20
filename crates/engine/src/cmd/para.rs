@@ -391,7 +391,7 @@ pub fn indent(s: &mut Session, _: &Value) -> CmdResult {
     let a = s.sel.ordered().0;
     let paths = super::selected_paths(s);
     let tab = s.doc.settings.default_tab.max(1.0);
-    // Документы (the app sets `new_first_line_indent`): an indented paragraph moves as one block,
+    // Write (the app sets `new_first_line_indent`): an indented paragraph moves as one block,
     // its first line (the red line) aligned with the rest.
     let align_first = s.new_first_line_indent.is_some();
     for path in paths {
@@ -420,7 +420,7 @@ pub fn outdent(s: &mut Session, _: &Value) -> CmdResult {
     let a = s.sel.ordered().0;
     let paths = super::selected_paths(s);
     let tab = s.doc.settings.default_tab.max(1.0);
-    // Документы: back at the margin, a paragraph takes its red line again.
+    // Write: back at the margin, a paragraph takes its red line again.
     let red_line = s.new_first_line_indent;
     for path in paths {
         let (num, left) = {

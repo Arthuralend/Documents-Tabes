@@ -1,4 +1,4 @@
-//! Документы: which window has which file, so a file opens only once, as in Word. Each window (a
+//! Write: which window has which file, so a file opens only once, as in Word. Each window (a
 //! process of its own) keeps `windows/<pid>.path` in the settings folder up to date with its
 //! document's path, touched every couple of seconds; a window that wants a file another one
 //! holds asks that one to come forward with `windows/<pid>.focus` instead of opening it again.

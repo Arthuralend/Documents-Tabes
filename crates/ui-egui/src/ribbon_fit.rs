@@ -37,6 +37,26 @@ pub struct GroupWidths {
 /// first all to compact, then to collapsed, stopping as soon as the row fits. Then whatever room is
 /// left is given back, from the left.
 pub fn plan(groups: &[GroupWidths], avail: f32) -> Vec<u8> {
+    let order: Vec<usize> = (0..groups.len()).rev().collect();
+    plan_in_order(groups, avail, &order)
+}
+
+/// Write: the order in which a tab's groups give way, first to last, by title; groups not
+/// listed give way before them, from the right. On Home, Find/Replace/Select folds first, the
+/// lists and alignment of Paragraph last but the Clipboard.
+fn shrink_order(tab: &str, groups: &[GroupWidths]) -> Vec<usize> {
+    const HOME: [&str; 6] = ["Editing", "Voice", "Styles", "Font", "Paragraph", "Clipboard"];
+    let mut order: Vec<usize> = (0..groups.len()).rev().collect();
+    if tab == "Home" {
+        let rank = |i: &usize| groups.get(*i).and_then(|g| HOME.iter().position(|t| *t == g.title)).unwrap_or(0);
+        order.sort_by_key(rank);
+    }
+    order
+}
+
+/// [`plan`], the groups giving way in `order` (indices, first to shrink first); room left over is
+/// given back in the opposite order.
+pub fn plan_in_order(groups: &[GroupWidths], avail: f32, order: &[usize]) -> Vec<u8> {
     let full = |g: &GroupWidths| g.widths[0].unwrap_or(0.0);
     let width = |g: &GroupWidths, level: u8| -> f32 {
         match level {
@@ -48,7 +68,7 @@ pub fn plan(groups: &[GroupWidths], avail: f32) -> Vec<u8> {
     let mut levels = vec![FULL; groups.len()];
     let mut total: f32 = groups.iter().map(full).sum();
     for target in [COMPACT, COLLAPSED] {
-        for i in (0..groups.len()).rev() {
+        for &i in order {
             if total <= avail {
                 break;
             }
@@ -59,7 +79,8 @@ pub fn plan(groups: &[GroupWidths], avail: f32) -> Vec<u8> {
     }
     // Shrinking a wide group (Styles) can make room the groups shrunk before it no longer need,
     // and a group of large buttons gains nothing collapsed: give back whatever still fits.
-    for (g, level) in groups.iter().zip(levels.iter_mut()) {
+    for &i in order.iter().rev() {
+        let (Some(g), Some(level)) = (groups.get(i), levels.get_mut(i)) else { continue };
         while *level > FULL {
             let wider = *level - 1;
             let next = total + width(g, wider) - width(g, *level);
@@ -133,7 +154,7 @@ pub fn begin(ctx: &Context, tab: &str, avail: f32) {
             .collect();
         (titles, groups)
     });
-    let levels = if groups.iter().all(|g| g.widths[0].is_some()) { plan(&groups, avail) } else { Vec::new() };
+    let levels = if groups.iter().all(|g| g.widths[0].is_some()) { plan_in_order(&groups, avail, &shrink_order(tab, &groups)) } else { Vec::new() };
     ctx.data_mut(|d| {
         d.insert_temp(frame_id(), Frame { tab: tab.to_string(), titles, levels, drawn: Vec::new() });
         d.insert_temp(active_id(), true);

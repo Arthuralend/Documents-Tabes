@@ -5,7 +5,7 @@
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
     Lexicon-<version>-windows-<arch>.msi            per-machine installer (WiX v5)
-    Lexicon-<version>-windows-<arch>-portable.zip   FondOffice-Documents\Documents.exe, Tables.exe
+    Lexicon-<version>-windows-<arch>-portable.zip   FS-Office\Write.exe, Tables.exe
 
   The binaries link the C runtime statically (+crt-static), so neither the MSI nor the portable
   zip needs the Visual C++ redistributable. Signing is delegated to sign.ps1 (skipped with a
@@ -99,10 +99,10 @@ foreach ($check in @(,@('wordcraft.exe', 2))) {
 $Stage = Join-Path $TargetDir "windows-package\$Arch"
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-Copy-Item (Join-Path $Bin 'wordcraft.exe') (Join-Path $Stage 'Documents.exe')
+Copy-Item (Join-Path $Bin 'wordcraft.exe') (Join-Path $Stage 'Write.exe')
 Copy-Item (Join-Path $TargetDir "tables\$Target\release\gridcraft.exe") (Join-Path $Stage 'Tables.exe')
 
-& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Documents.exe')
+& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Write.exe')
 & (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'Tables.exe')
 
 # ---- MSI ---------------------------------------------------------------------------------------
@@ -120,8 +120,8 @@ function ConvertTo-RtfText([string] $Text) {
   return $sb.ToString()
 }
 $paragraphs = [System.Collections.Generic.List[string]]::new()
-$paragraphs.Add('\b FondOffice Документы и таблицы (FondSoftware)\b0')
-$paragraphs.Add((ConvertTo-RtfText 'Документы and Таблицы by FondSoftware, based on the open-source WordCraft and GridCraft, are dual-licensed under the MIT License or the Apache License, Version 2.0, at your option. Both license texts follow. Bundled fonts, dictionaries and other third-party material keep their own open licenses, listed in NOTICE and ATTRIBUTION.md at https://github.com/Arthuralend/Documents-Tabes.'))
+$paragraphs.Add('\b FS Office: Write (FantasticSoftware) and Таблицы (FondSoftware)\b0')
+$paragraphs.Add((ConvertTo-RtfText 'Write by FantasticSoftware and Таблицы by FondSoftware, based on the open-source WordCraft and GridCraft, are dual-licensed under the MIT License or the Apache License, Version 2.0, at your option. Both license texts follow. Bundled fonts, dictionaries and other third-party material keep their own open licenses, listed in NOTICE and ATTRIBUTION.md at https://github.com/Arthuralend/Documents-Tabes.'))
 foreach ($file in 'LICENSE-MIT', 'LICENSE-APACHE') {
   $title = $true  # each file opens with its license's name: show it bold
   foreach ($para in ((Get-Content -Raw (Join-Path $Root $file)) -split '\r?\n\s*\r?\n')) {
@@ -149,8 +149,8 @@ Remove-Item -Force -ErrorAction SilentlyContinue ([IO.Path]::ChangeExtension($Ms
 & (Join-Path $PSScriptRoot 'sign.ps1') $Msi
 
 # ---- portable zip ------------------------------------------------------------------------------
-# The folder people unpack: FondOffice-Documents with Documents.exe and Tables.exe.
-$Portable = Join-Path $TargetDir "windows-package\FondOffice-Documents"
+# The folder people unpack: FS-Office with Write.exe and Tables.exe.
+$Portable = Join-Path $TargetDir "windows-package\FS-Office"
 Remove-Item -Recurse -Force $Portable -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Portable | Out-Null
 Copy-Item (Join-Path $Stage '*.exe') $Portable

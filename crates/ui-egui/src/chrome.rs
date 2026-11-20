@@ -67,7 +67,7 @@ fn quick_access(ui: &mut Ui, app: &mut WordApp) {
         if id == "edit.undo" {
             undo_list_button(ui, app, enabled);
         }
-        // Документы: Save as PDF sits right beside Save.
+        // Write: Save as PDF sits right beside Save.
         if id == "file.save" {
             let on = app.has_document();
             qat_button(ui, app, "pdf", tl!("Save as PDF"), "file.exportPdf", on);
@@ -369,7 +369,7 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
             // Centred title.
             let title = if !app.has_document() {
                 // No document open (#1129): the app's name alone (Лексикон in Russian).
-                tl!("Документы").to_string()
+                tl!("Write").to_string()
             } else {
                 format!(
                     "{} — {}",
@@ -485,7 +485,7 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                         &[("language", &lang), ("file", &file.to_string_lossy()), ("reason", reason)],
                     ),
                     (None, Some(name)) => crate::i18n::fmt(
-                        tl!("No spelling dictionary for {language} is installed, so it isn't checked. Документы looks for the Hunspell dictionary {name} in the WORDCRAFT_DICTIONARIES folder and in the usual system locations."),
+                        tl!("No spelling dictionary for {language} is installed, so it isn't checked. Write looks for the Hunspell dictionary {name} in the WORDCRAFT_DICTIONARIES folder and in the usual system locations."),
                         &[("language", &lang), ("name", name)],
                     ),
                     (None, None) => tl!("Language").to_string(),

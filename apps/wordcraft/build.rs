@@ -14,12 +14,12 @@ fn main() {
     }
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/wordcraft.ico")
-        .set("ProductName", "Документы")
-        .set("FileDescription", "Документы — FantasticSoft")
-        .set("CompanyName", "FantasticSoft")
-        .set("LegalCopyright", "FantasticSoft (armenoid@gmail.com). Based on WordCraft, MIT OR Apache-2.0.")
-        .set("OriginalFilename", "Documents.exe")
-        .set("InternalName", "Documents");
+        .set("ProductName", "Write")
+        .set("FileDescription", "Write — FantasticSoftware")
+        .set("CompanyName", "FantasticSoftware")
+        .set("LegalCopyright", "FantasticSoftware (armenoid@gmail.com). Based on WordCraft, MIT OR Apache-2.0.")
+        .set("OriginalFilename", "Write.exe")
+        .set("InternalName", "Write");
     if let Err(e) = res.compile() {
         if std::env::var_os("WORDCRAFT_REQUIRE_WINRES").is_some() {
             eprintln!("embedding Windows resources failed: {e}");

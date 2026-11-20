@@ -19,7 +19,7 @@
 	1.5 Line Spacing	Interlinia 1,5
 	A free, open-source word processor written in Rust, with Russian and English spelling.\nBased on WordCraft by the ArtCraft team.	Darmowy edytor tekstu o otwartym kodzie źródłowym napisany w Rust, ze sprawdzaniem pisowni po rosyjsku i angielsku.\nOparty na WordCraft zespołu ArtCraft.
 	About	Informacje
-	About Документы	O programie Документы
+	About Write	O programie Write
 	Accept	Zaakceptuj
 	Accept All Changes	Zaakceptuj wszystkie zmiany
 	Accept This Change	Zaakceptuj tę zmianę
@@ -377,7 +377,7 @@
 	Landscape	Pozioma
 	Language	Język
 	{language} (no dictionary)	{language} (brak słownika)
-	No spelling dictionary for {language} is installed, so it isn't checked. Документы looks for the Hunspell dictionary {name} in the WORDCRAFT_DICTIONARIES folder and in the usual system locations.	Nie zainstalowano słownika pisowni dla języka: {language}, więc tekst nie jest sprawdzany. Документы szuka słownika Hunspell {name} w folderze WORDCRAFT_DICTIONARIES i w typowych lokalizacjach systemowych.
+	No spelling dictionary for {language} is installed, so it isn't checked. Write looks for the Hunspell dictionary {name} in the WORDCRAFT_DICTIONARIES folder and in the usual system locations.	Nie zainstalowano słownika pisowni dla języka: {language}, więc tekst nie jest sprawdzany. Write szuka słownika Hunspell {name} w folderze WORDCRAFT_DICTIONARIES i w typowych lokalizacjach systemowych.
 	Lasso	Lasso
 	Last Column	Ostatnia kolumna
 	Last commit	Ostatni commit
@@ -406,7 +406,7 @@
 	Link to Previous	Połącz z poprzednim
 	Links	Linki
 	Location: {path}	Lokalizacja: {path}
-	MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team, the WordCraft contributors and the Документы contributors.	MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team, the WordCraft contributors and the Документы contributors.
+	MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team, the WordCraft contributors and the Write contributors.	MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team, the WordCraft contributors and the Write contributors.
 	Macros	Makra
 	Mailings	Korespondencja
 	Manage Sources	Zarządzaj źródłami
@@ -823,7 +823,7 @@
 	Word Right	Słowo w prawo
 	Word document (*.docx)	Dokument Word (*.docx)
 	WordArt	WordArt
-	Документы	Документы
+	Write	Write
 	Words	Słowa
 	Words only	Tylko wyrazy
 	Wrap Text	Zawijaj tekst
@@ -891,7 +891,7 @@
 	Stopped	Zatrzymano
 	Speed	Szybkość
 	Normal speed	Normalna szybkość
-	AutoSave documents you have saved in Документы	Zapisuj automatycznie dokumenty zapisane już w programie Документы
+	AutoSave documents you have saved in Write	Zapisuj automatycznie dokumenty zapisane już w programie Write
 	AutoSave failed: {error}. Save the document to turn AutoSave back on.	Autozapis nie powiódł się: {error}. Zapisz dokument, aby ponownie włączyć autozapis.
 	Couldn't download {name}: {error}	Nie udało się pobrać pliku {name}: {error}
 	Do you want to save changes to {name}?	Czy zapisać zmiany w dokumencie {name}?
@@ -1113,7 +1113,7 @@
 	Glow Colors	Kolory poświaty
 	Hide from style lists	Ukryj na listach stylów
 	Indents and Spacing	Wcięcia i odstępy
-	Keep the password somewhere safe: without it nobody, Документы included, can open the document. Leave both boxes empty to remove the password.	Przechowuj hasło w bezpiecznym miejscu: bez niego nikt, również Документы, nie otworzy dokumentu. Pozostaw oba pola puste, aby usunąć hasło.
+	Keep the password somewhere safe: without it nobody, Write included, can open the document. Leave both boxes empty to remove the password.	Przechowuj hasło w bezpiecznym miejscu: bez niego nikt, również Write, nie otworzy dokumentu. Pozostaw oba pola puste, aby usunąć hasło.
 	Line breaking	Łamanie wierszy
 	Linked style (paragraph and character)	Styl połączony (akapitowy i znakowy)
 	Manage Styles	Zarządzaj stylami
@@ -1743,7 +1743,7 @@
 	Beginning of Word	Początek wyrazu
 	Blue:	Niebieski:
 	Border lines	Linie obramowania
-	Browse in Документы…	Przeglądaj w programie Документы…
+	Browse in Write…	Przeglądaj w programie Write…
 	Building Block Gallery Content Control	Formant zawartości galerii bloków konstrukcyjnych
 	Can't be deleted	Nie można usunąć
 	Capitalize first letter of sentences	Zaczynaj zdania wielką literą
@@ -1919,7 +1919,7 @@
 	Only comments can be added, except in regions marked editable.	Można dodawać tylko komentarze, z wyjątkiem obszarów oznaczonych jako edytowalne.
 	Only form fields can be filled in.	Można wypełniać tylko pola formularza.
 	Only the allowed styles can be applied.	Można stosować tylko dozwolone style.
-	Open a file with Документы's own browser when the system file dialog doesn't appear.	Otwórz plik we własnej przeglądarce plików programu Документы, gdy systemowe okno wyboru pliku się nie pojawia.
+	Open a file with Write's own browser when the system file dialog doesn't appear.	Otwórz plik we własnej przeglądarce plików programu Write, gdy systemowe okno wyboru pliku się nie pojawia.
 	Ordinals (1st) as superscript	Liczebniki porządkowe (1st) jako indeks górny
 	Organizer	Organizator
 	Organizer…	Organizator…
@@ -2055,7 +2055,7 @@
 	The document is read only, except for regions marked editable.	Dokument jest tylko do odczytu, z wyjątkiem obszarów oznaczonych jako edytowalne.
 	The password is optional; without it anyone can stop the protection.	Hasło jest opcjonalne; bez niego każdy może wyłączyć ochronę.
 	The printer, two-sided printing and pages per sheet are chosen in that dialog.	Drukarkę, druk dwustronny i liczbę stron na arkuszu wybiera się w tym oknie.
-	The system file dialog isn't available, so Документы shows its own. To get the system dialog, install a file chooser portal (such as xdg-desktop-portal-gtk) or zenity.	Systemowe okno wyboru pliku jest niedostępne, więc Документы pokazuje własne. Aby korzystać z okna systemowego, zainstaluj portal wyboru plików (np. xdg-desktop-portal-gtk) lub zenity.
+	The system file dialog isn't available, so Write shows its own. To get the system dialog, install a file chooser portal (such as xdg-desktop-portal-gtk) or zenity.	Systemowe okno wyboru pliku jest niedostępne, więc Write pokazuje własne. Aby korzystać z okna systemowego, zainstaluj portal wyboru plików (np. xdg-desktop-portal-gtk) lub zenity.
 	These marks show even when Show/Hide ¶ is off.	Te znaki są widoczne nawet przy wyłączonym poleceniu Pokaż wszystko ¶.
 	This document	Ten dokument
 	This folder can't be read: {error}	Nie można odczytać tego folderu: {error}
@@ -2099,15 +2099,15 @@
 	Undo 1 Action	Cofnij 1 akcję
 	Undo {n} Actions	Cofnij akcje: {n}
 	Start-up	Uruchamianie
-	Show the Start screen when Документы starts	Pokazuj ekran startowy po uruchomieniu programu Документы
-	On: Документы opens on File › Home, with a blank document, the templates and your recent documents. Off: it opens a blank document.	Włączone: Документы otwiera się na karcie Plik › Start z pustym dokumentem, szablonami i ostatnimi dokumentami. Wyłączone: otwiera pusty dokument.
-	Couldn't make Документы the default: {error}	Nie udało się ustawić Документы jako domyślnego: {error}
-	In Default apps, choose Документы for the document types you want it to open.	W Aplikacjach domyślnych wybierz Документы dla typów dokumentów, które ma otwierać.
-	Make Документы the default for Word documents…	Ustaw Документы jako domyślny dla dokumentów Word…
-	Opens .docx, .doc, .rtf and .odt files and Word templates with Документы from now on.	Od teraz pliki .docx, .doc, .rtf i .odt oraz szablony Word otwierają się w Документы.
-	Opens Settings › Default apps, where you choose Документы for .docx and the other document types.	Otwiera Ustawienia › Aplikacje domyślne, gdzie wybierasz Документы dla .docx i innych typów dokumentów.
-	To open Word documents with Документы by default: select one in Finder, choose File › Get Info, pick Документы under Open with, then click Change All.	Aby otwierać dokumenty Word domyślnie w Документы: zaznacz jeden w Finderze, wybierz Plik › Pokaż info, wybierz Документы w „Otwórz za pomocą”, a następnie kliknij „Zmień wszystkie”.
-	Документы is now the default app for Word documents.	Документы jest teraz domyślną aplikacją dla dokumentów Word.
+	Show the Start screen when Write starts	Pokazuj ekran startowy po uruchomieniu programu Write
+	On: Write opens on File › Home, with a blank document, the templates and your recent documents. Off: it opens a blank document.	Włączone: Write otwiera się na karcie Plik › Start z pustym dokumentem, szablonami i ostatnimi dokumentami. Wyłączone: otwiera pusty dokument.
+	Couldn't make Write the default: {error}	Nie udało się ustawić Write jako domyślnego: {error}
+	In Default apps, choose Write for the document types you want it to open.	W Aplikacjach domyślnych wybierz Write dla typów dokumentów, które ma otwierać.
+	Make Write the default for Word documents…	Ustaw Write jako domyślny dla dokumentów Word…
+	Opens .docx, .doc, .rtf and .odt files and Word templates with Write from now on.	Od teraz pliki .docx, .doc, .rtf i .odt oraz szablony Word otwierają się w Write.
+	Opens Settings › Default apps, where you choose Write for .docx and the other document types.	Otwiera Ustawienia › Aplikacje domyślne, gdzie wybierasz Write dla .docx i innych typów dokumentów.
+	To open Word documents with Write by default: select one in Finder, choose File › Get Info, pick Write under Open with, then click Change All.	Aby otwierać dokumenty Word domyślnie w Write: zaznacz jeden w Finderze, wybierz Plik › Pokaż info, wybierz Write w „Otwórz za pomocą”, a następnie kliknij „Zmień wszystkie”.
+	Write is now the default app for Word documents.	Write jest teraz domyślną aplikacją dla dokumentów Word.
 	Numerals:	Cyfry:
 	Numerals	Cyfry
 	Hindi	Hindi
@@ -2568,7 +2568,7 @@ preview	Title	Tytuł
 	{name}   {height} × {width} mm	{name}   {height} × {width} mm
 	{width} × {height} mm	{width} × {height} mm
 	{kind}, {columns} × {rows}, {size} ({paper})	{kind}, {columns} × {rows}, {size} ({paper})
-	Researcher needs an online service; Документы keeps your documents offline.	Badacz wymaga usługi online, a Документы przechowuje Twoje dokumenty offline.
+	Researcher needs an online service; Write keeps your documents offline.	Badacz wymaga usługi online, a Write przechowuje Twoje dokumenty offline.
 	These settings will be used for new documents.	Te ustawienia będą używane w nowych dokumentach.
 	can't split at the first row	nie można podzielić tabeli na pierwszym wierszu
 	select two or more cells to merge	zaznacz co najmniej dwie komórki do scalenia
@@ -2767,8 +2767,9 @@ preview	Title	Tytuł
 	Vanilla	Wanilia
 	Ivory	Kość słoniowa
 	Charcoal	Grafit
-	Developer: FantasticSoft	Twórca: FantasticSoft
+	Developer: FantasticSoftware	Twórca: FantasticSoftware
 	Unsaved copies can be restored in File › Recover.	Niezapisane kopie można przywrócić w menu Plik › Odzyskaj.
 	Save as PDF	Zapisz jako PDF
 	Styles\nPane	Okienko\nstylów
 	the clipboard is empty	Schowek jest pusty
+	Paper Texture	Faktura papieru

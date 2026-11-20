@@ -37,6 +37,8 @@ const TEXTURE_KEEP_SCREENS: f32 = 3.0;
 
 pub struct CanvasState {
     textures: HashMap<usize, (u64, TextureHandle)>,
+    /// Write: the paper grain drawn over the pages on screen ([`paper_grain`]).
+    paper: Option<TextureHandle>,
     /// Visible full-resolution tiles of pages too tall for one GPU texture.
     tiles: HashMap<(usize, usize), (u64, TextureHandle)>,
     /// Page content fingerprints of the current layout, for the texture cache (#811).
@@ -212,6 +214,7 @@ impl Default for CanvasState {
     fn default() -> Self {
         CanvasState {
             textures: HashMap::new(),
+            paper: None,
             tiles: HashMap::new(),
             page_keys: PageKeys::default(),
             markup_facts: std::cell::Cell::new(None),
@@ -1316,6 +1319,16 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
             } else if let Some((_, tex)) = app.canvas.textures.get(&i) {
                 painter.image(tex.id(), visual_sr, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
             }
+            // Write: the paper's grain, on screen only (never in PDF, print or the file).
+            if app.ui.paper_texture && !dark_page {
+                let tex = app.canvas.paper.get_or_insert_with(|| paper_grain(ui.ctx())).clone();
+                // The grain is fixed to the paper: it scales with the zoom and scrolls with the page.
+                let tile = PAPER_TILE_PT * geo.scale;
+                if tile.is_finite() && tile > 1.0 {
+                    let uv = Rect::from_min_max(pos2(0.0, 0.0), pos2(visual_sr.width() / tile, visual_sr.height() / tile));
+                    painter.image(tex.id(), visual_sr, uv, Color32::WHITE);
+                }
+            }
             let page_scale = page_screen_scale(visual_sr, page, geo.scale);
             // Header/footer editing chrome.
             if let StoryRef::Part(id) = app.session.sel.focus.story {
@@ -1460,7 +1473,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                 }
             }
         }
-        // Документы: words just dictated glow for a moment, fading out, so it is plain where the
+        // Write: words just dictated glow for a moment, fading out, so it is plain where the
         // heard text goes.
         if let Some((a, b, k)) = crate::dictation::trail(app, crate::now_ms()) {
             for (pi, r) in layout.selection_rects(&app.session.doc, &a, &b, app.session.page_hint) {
@@ -2950,7 +2963,7 @@ pub(crate) fn dragged_margin(edge: MarginEdge, at: f32, s: &wordcraft_doc::secti
 /// A sixteenth of an inch, in points: the margin step with inches.
 const INCH_SIXTEENTH: f32 = 4.5;
 
-/// The step a dragged margin snaps to in `unit` (Документы): a millimetre with centimetres or
+/// The step a dragged margin snaps to in `unit` (Write): a millimetre with centimetres or
 /// millimetres, so 1.5 cm or 2.3 cm is set exactly; a point with points and picas; a sixteenth of
 /// an inch with inches. Alt held while dragging snaps to nothing.
 pub(crate) fn margin_step(unit: wordcraft_geom::Unit, free: bool) -> f32 {
@@ -3018,7 +3031,7 @@ fn margin_handle(
     if r.dragged()
         && let Some(pp) = r.interact_pointer_pos()
     {
-        // Документы: a millimetre at a time (Alt: anywhere), and the margin shown while it moves.
+        // Write: a millimetre at a time (Alt: anywhere), and the margin shown while it moves.
         let step = margin_step(app.session.units(), ui.input(|i| i.modifiers.alt));
         let (stored, v) = margin_drag_step(edge, to_pt(pp), sect, mirrored, step);
         if !r.drag_started() {
@@ -3039,6 +3052,60 @@ fn margin_handle(
     if r.double_clicked() {
         let _ = app.run("layout.pageSetup", json!({}));
     }
+}
+
+/// One tile of the paper grain, in page points.
+const PAPER_TILE_PT: f32 = 160.0;
+/// The grain's tile, in texels.
+const PAPER_TILE_PX: usize = 256;
+
+/// Write: a tileable, faint warm grain for the page (fibres and soft blotches), drawn over the
+/// rendered page on screen. Made once, procedurally; no image file.
+fn paper_grain(ctx: &egui::Context) -> TextureHandle {
+    let rgba = paper_grain_pixels();
+    let image = egui::ColorImage::from_rgba_unmultiplied([PAPER_TILE_PX, PAPER_TILE_PX], &rgba);
+    let options = egui::TextureOptions { wrap_mode: egui::TextureWrapMode::Repeat, ..egui::TextureOptions::LINEAR };
+    ctx.load_texture("paper_grain", image, options)
+}
+
+/// The grain's pixels (RGBA, unmultiplied): a warm tint whose strength varies with fine noise and
+/// broader blotches, both periodic so the tile repeats without seams.
+fn paper_grain_pixels() -> Vec<u8> {
+    let n = PAPER_TILE_PX;
+    // Integer hash of a lattice point on a torus of `px` × `py` cells (so the tile wraps).
+    let hash = |x: usize, y: usize, px: usize, py: usize, seed: u32| -> f32 {
+        let (x, y) = ((x % px.max(1)) as u32, (y % py.max(1)) as u32);
+        let mut h = x.wrapping_mul(374_761_393) ^ y.wrapping_mul(668_265_263) ^ seed.wrapping_mul(2_246_822_519);
+        h = (h ^ (h >> 13)).wrapping_mul(1_274_126_177);
+        ((h ^ (h >> 16)) & 0xffff) as f32 / 65535.0
+    };
+    // Smooth value noise with `cx` cells across the tile and `cy` down it.
+    let noise = |x: usize, y: usize, cx: usize, cy: usize, seed: u32| -> f32 {
+        let (wx, wy) = ((n / cx.max(1)).max(1) as f32, (n / cy.max(1)).max(1) as f32);
+        let (fx, fy) = (x as f32 / wx, y as f32 / wy);
+        let (ix, iy) = (fx.floor() as usize, fy.floor() as usize);
+        let (tx, ty) = (fx - fx.floor(), fy - fy.floor());
+        let s = |t: f32| t * t * (3.0 - 2.0 * t);
+        let (sx, sy) = (s(tx), s(ty));
+        let a = hash(ix, iy, cx, cy, seed);
+        let b = hash(ix + 1, iy, cx, cy, seed);
+        let c = hash(ix, iy + 1, cx, cy, seed);
+        let d = hash(ix + 1, iy + 1, cx, cy, seed);
+        (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy
+    };
+    let mut out = Vec::with_capacity(n * n * 4);
+    for y in 0..n {
+        for x in 0..n {
+            let blotch = noise(x, y, 4, 4, 1) * 0.6 + noise(x, y, 8, 8, 2) * 0.4;
+            // Fibres: short strands, fine noise stretched along x and across a few directions.
+            let fibre = noise(x, y, 32, 128, 3) * 0.5 + noise(y, x, 32, 128, 5) * 0.5;
+            let grain = hash(x, y, n, n, 4);
+            let a = 8.0 + blotch * 9.0 + fibre * 5.0 + grain * 5.0;
+            let shade = 150.0 - grain * 30.0;
+            out.extend_from_slice(&[(shade + 40.0) as u8, (shade + 20.0) as u8, shade as u8, a.clamp(0.0, 40.0) as u8]);
+        }
+    }
+    out
 }
 
 /// Convert a page position (points) to screen coordinates (for agents and tests).
@@ -3676,7 +3743,7 @@ mod tests {
         assert_eq!(caret_contrast(Rgb(0x33, 0x33, 0x33)), Color32::WHITE, "dark paper");
         assert_eq!(caret_contrast(Rgb(0xC0, 0xC0, 0xC0)), Color32::BLACK, "light grey");
 
-        let doc = wordcraft_doc::Document::from_text("Hello Документы");
+        let doc = wordcraft_doc::Document::from_text("Hello Write");
         let mut a = WordApp::new(wordcraft_engine::Session::new(doc), Default::default());
         let at = |a: &mut WordApp, off: usize| {
             let layout = a.session.layout();
@@ -3703,7 +3770,7 @@ mod tests {
     /// there is no caret, so the page's draw list isn't built for it.
     #[test]
     fn caret_colour_is_not_worked_out_while_the_caret_is_hidden() {
-        let mut a = WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::from_text("Hello Документы")), Default::default());
+        let mut a = WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::from_text("Hello Write")), Default::default());
         a.run("select.text", json!({"text": "Hello"})).unwrap();
         let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(1440.0, 900.0)).build_ui_state(
             |ui, app: &mut WordApp| {
@@ -6159,11 +6226,39 @@ mod tests {
     /// the preview follows the pointer, and the object shows twice.
     #[test]
     fn the_view_key_changes_when_a_drag_takes_an_object_off_the_page() {
-        let doc = wordcraft_doc::Document::from_text("Hello Документы");
+        let doc = wordcraft_doc::Document::from_text("Hello Write");
         let app = WordApp::new(wordcraft_engine::Session::new(doc), Default::default());
         let object = Pos::body(0, 5);
         let hidden = view_key(&app, false, Some(&object));
         assert_ne!(hidden, view_key(&app, false, None), "the page without the dragged object is rendered again");
         assert_eq!(hidden, view_key(&app, false, Some(&object)), "the same drag keeps the key: no re-render every frame");
+    }
+}
+
+#[cfg(test)]
+mod paper_grain_tests {
+    /// Write: the paper grain is faint (the text keeps its contrast) and its tile repeats
+    /// without a seam: the first and last columns and rows are as alike as neighbours inside.
+    #[test]
+    fn the_paper_grain_is_faint_and_seamless() {
+        let px = super::paper_grain_pixels();
+        let n = super::PAPER_TILE_PX;
+        assert_eq!(px.len(), n * n * 4);
+        assert!(px.chunks(4).all(|p| p[3] <= 40), "faint");
+        let alpha = |x: usize, y: usize| f32::from(px[(y * n + x) * 4 + 3]);
+        let seam: f32 = (0..n).map(|y| (alpha(0, y) - alpha(n - 1, y)).abs()).sum::<f32>() / n as f32;
+        let inside: f32 = (0..n).map(|y| (alpha(n / 2, y) - alpha(n / 2 - 1, y)).abs()).sum::<f32>() / n as f32;
+        assert!(seam <= inside * 2.0 + 1.0, "seam {seam} vs inside {inside}");
+    }
+
+    /// The grain can be switched off, and is on by default.
+    #[test]
+    fn paper_texture_toggles() {
+        let mut a = crate::WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::new()), crate::Services::default());
+        assert!(a.ui.paper_texture);
+        a.run("ui.paperTexture", serde_json::json!({"value": false})).unwrap();
+        assert!(!a.ui.paper_texture);
+        a.run("ui.paperTexture", serde_json::json!({})).unwrap();
+        assert!(a.ui.paper_texture);
     }
 }

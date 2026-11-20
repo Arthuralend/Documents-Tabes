@@ -8,7 +8,7 @@ use crate::{WordApp, icons};
 
 /// Height of the ribbon content area.
 pub const CONTENT_H: f32 = 72.0;
-/// Документы: the ribbon has no group title row (Clipboard, Font, Paragraph…), as in the owner's
+/// Write: the ribbon has no group title row (Clipboard, Font, Paragraph…), as in the owner's
 /// design; groups are told apart by their dividers.
 pub const LABEL_H: f32 = 0.0;
 /// A folded group's drop-down still names its group: the height of that title row.
@@ -272,7 +272,7 @@ fn big_button(ui: &mut Ui, app: &mut WordApp, icon: &str, label: &str, id: &str,
     resp
 }
 
-/// A large split button (Документы, as in the owner's design): the icon and label run `id`; the
+/// A large split button (Write, as in the owner's design): the icon and label run `id`; the
 /// small ▾ beside the icon opens `menu`. `checked` draws a mode that stays on (Dictate).
 #[allow(clippy::too_many_arguments)]
 pub fn big_split(
@@ -329,7 +329,7 @@ pub fn big_split(
     resp
 }
 
-/// A thin divider between clusters of small buttons in a row (Документы, as in the owner's design).
+/// A thin divider between clusters of small buttons in a row (Write, as in the owner's design).
 pub fn vsep(ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let (r, _) = ui.allocate_exact_size(vec2(11.0, SMALL_H), Sense::hover());
@@ -345,7 +345,7 @@ pub fn small(ui: &mut Ui, app: &mut WordApp, icon: &str, label: Option<&str>, ti
 pub const SMALL_W: f32 = 28.0;
 /// Height of a small button.
 pub const SMALL_H: f32 = 24.0;
-/// Size of a small button's icon (a little larger than Word's 16, as Документы draws them).
+/// Size of a small button's icon (a little larger than Word's 16, as Write draws them).
 pub const SMALL_ICON: f32 = 20.0;
 /// Size of a large button's icon.
 pub const BIG_ICON: f32 = 34.0;
@@ -538,7 +538,7 @@ pub fn group_titled(ui: &mut Ui, id_title: &str, title: &str, launcher: Option<&
             #[cfg(not(test))]
             let _ = content;
         });
-        // No title row (Документы): the group's settings stay reachable from its menus.
+        // No title row (Write): the group's settings stay reachable from its menus.
         let _ = (inner, launcher);
     }
     ui.add_space(5.0);
@@ -586,7 +586,10 @@ fn collapsed_group(
     add: impl FnOnce(&mut Ui, &mut WordApp),
 ) {
     let t = Tokens::get(ui.ctx());
-    let text_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(title.to_string(), regular(11.5), t.text).size().x);
+    // Write: a folded Editing group says Find, so it is narrower than the group (the full
+    // name, Редактирование, was wider than the group itself and it never folded).
+    let shown = if id_title == "Editing" { tl!("Find") } else { title };
+    let text_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(shown.to_string(), regular(11.5), t.text).size().x);
     let (r, resp) = ui.allocate_exact_size(vec2((text_w + DROPDOWN + 14.0).max(48.0), CONTENT_H + LABEL_H), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, title));
     let open_id = collapsed_open_id(ui, id_title, position);
@@ -599,7 +602,7 @@ fn collapsed_group(
         t.icon,
         t.accent,
     );
-    label_line(ui, r.center().x, r.min.y + BIG_LABEL_Y, title, regular(11.5), t.text, true);
+    label_line(ui, r.center().x, r.min.y + BIG_LABEL_Y, shown, regular(11.5), t.text, true);
     let resp = resp.on_hover_text(title);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, title));
     group_drop_down(ui, &resp, open_id, was_open, id_title, title, launcher, app, add);
@@ -656,10 +659,10 @@ fn group_drop_down(
     ui.data_mut(|d| d.insert_temp(open_id, shown));
 }
 
-/// A ribbon group that keeps a column of its most used buttons when the window is too narrow for
-/// it (Документы: Home › Paragraph keeps the four alignments): drawn as designed (or compact) like
-/// [`group`] while there is room; folded, `narrow` draws its buttons one under another (each
-/// [`mini`]) and a small ▼ under them, in place of the title, opens the whole group.
+/// A ribbon group that keeps a block of its most used buttons when the window is too narrow for
+/// it (Write: Home › Paragraph keeps its lists and the four alignments): drawn as designed (or
+/// compact) like [`group`] while there is room; folded, `narrow` draws the block at its full size
+/// and a slim ▾ beside it opens the whole group.
 pub fn group_narrow(
     ui: &mut Ui,
     title: &str,
@@ -675,18 +678,17 @@ pub fn group_narrow(
     let t = Tokens::get(ui.ctx());
     let start = ui.cursor().min;
     let position = crate::ribbon_fit::position(ui.ctx());
-    let inner = ui.allocate_ui_with_layout(vec2(MINI_W, CONTENT_H - MORE_H), egui::Layout::top_down(egui::Align::Min), |ui| {
-        ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-        ui.set_min_width(MINI_W);
+    ui.allocate_ui_with_layout(vec2(ui.available_width(), CONTENT_H), egui::Layout::left_to_right(egui::Align::Min), |ui| {
+        ui.spacing_mut().item_spacing = vec2(1.0, 1.0);
         narrow(ui, app);
     });
-    let x1 = inner.response.rect.max.x.max(start.x + MINI_W);
-    // The ▼ under the column: the rest of the group.
-    let more = Rect::from_min_max(pos2(start.x, start.y + CONTENT_H - MORE_H), pos2(x1, start.y + CONTENT_H));
+    // The ▾ beside the block: the rest of the group.
+    let (more, _) = ui.allocate_exact_size(vec2(MORE_W, CONTENT_H), Sense::hover());
+    let more = more.shrink2(vec2(0.0, 6.0));
     let open_id = collapsed_open_id(ui, title, position);
     let was_open = ui.data(|d| d.get_temp::<bool>(open_id)).unwrap_or(false);
     let resp = ui.interact(more, ui.id().with(("group_more", title, position)), Sense::click());
-    bg(ui, more.shrink2(vec2(1.0, 1.0)), &resp, was_open, &t);
+    bg(ui, more, &resp, was_open, &t);
     icons::paint(ui.painter(), Rect::from_center_size(more.center(), vec2(DROPDOWN + 2.0, DROPDOWN + 2.0)), "dropdown", t.icon, t.icon);
     let resp = resp.on_hover_text(shown_title);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, shown_title));
@@ -698,17 +700,8 @@ pub fn group_narrow(
     crate::ribbon_fit::record(ui.ctx(), title, crate::ribbon_fit::COLLAPSED, ui.cursor().min.x - start.x);
 }
 
-/// Width of a [`mini`] button.
-pub const MINI_W: f32 = 28.0;
-/// Height of the ▼ under a folded group's column ([`group_narrow`]).
-const MORE_H: f32 = 13.0;
-/// Height of a [`mini`] button: four and the ▼ under them fill the ribbon's content height.
-pub const MINI_H: f32 = (CONTENT_H - MORE_H) / 4.0;
-
-/// A button of a folded group's column ([`group_narrow`]): its icon only, the name in the tooltip.
-pub fn mini(ui: &mut Ui, app: &mut WordApp, icon: &str, tip: &str, id: &str, params: Value, checked: bool) -> Response {
-    small_sized(ui, app, icon, None, tip, id, params, checked, vec2(MINI_W, MINI_H), 15.0)
-}
+/// Width of the ▾ beside a folded group's block ([`group_narrow`]).
+const MORE_W: f32 = 16.0;
 
 /// The icon a collapsed group's button shows.
 fn group_icon(title: &str) -> &'static str {

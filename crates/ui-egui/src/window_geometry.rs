@@ -6,8 +6,10 @@
 
 use serde::{Deserialize, Serialize};
 
-/// The smallest window restored: the desktop app's minimum inner size.
-pub const MIN_SIZE: egui::Vec2 = egui::vec2(760.0, 480.0);
+/// The smallest window restored: the desktop app's minimum inner size. Write: narrow enough
+/// for two windows side by side on a 13-inch MacBook Air (1470 pt wide: half is 735) and in
+/// macOS Split View; the ribbon folds its groups to fit.
+pub const MIN_SIZE: egui::Vec2 = egui::vec2(600.0, 420.0);
 /// Larger saved sizes are corrupt. eframe also shrinks the start size to the largest monitor.
 const MAX_SIZE: egui::Vec2 = egui::vec2(16384.0, 16384.0);
 /// Saved positions farther from the origin than this are corrupt.
@@ -308,8 +310,9 @@ mod tests {
         let again = WindowGeometry { position: Some([48.0, 48.0]), width: 1424.0, height: 729.0, ..saved() };
         assert_eq!(again.fit_on_monitor(&opened(egui::pos2(48.0, 48.0), egui::vec2(1424.0, 729.0), laptop)), None);
         // Never smaller than the minimum size, and never off the top-left corner.
-        let tiny = egui::vec2(800.0, 600.0);
-        assert_eq!(system.fit_on_monitor(&opened(at, start, tiny)), Some((egui::pos2(12.0, 40.5), MIN_SIZE)));
+        let tiny = egui::vec2(640.0, 480.0);
+        let fit = system.fit_on_monitor(&opened(at, start, tiny));
+        assert!(fit.is_some_and(|(p, size)| size == MIN_SIZE && p.x >= 0.0 && p.y >= 0.0), "{fit:?}");
         // Maximized, full screen or minimized, or the monitor not known yet: nothing to do.
         let mut i = opened(at, egui::vec2(1440.0, 864.0), laptop);
         assert_eq!(WindowGeometry { maximized: true, ..saved() }.fit_on_monitor(&i), None);
