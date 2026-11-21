@@ -42,12 +42,16 @@ pub fn plan(groups: &[GroupWidths], avail: f32) -> Vec<u8> {
 }
 
 /// Write: the order in which a tab's groups give way, first to last, by title; groups not
-/// listed give way before them, from the right. On Home, Find/Replace/Select folds first, the
-/// lists and alignment of Paragraph last but the Clipboard.
+/// listed give way before them, from the right. On Home, Find/Replace/Select folds first, then
+/// Dictate and Styles, then Paragraph down to its lists and alignments; the Clipboard and Font
+/// never fold (the owner's design keeps them whole in a half-screen window): what doesn't fit
+/// then scrolls.
 fn shrink_order(tab: &str, groups: &[GroupWidths]) -> Vec<usize> {
-    const HOME: [&str; 6] = ["Editing", "Voice", "Styles", "Font", "Paragraph", "Clipboard"];
+    const HOME: [&str; 4] = ["Editing", "Voice", "Styles", "Paragraph"];
+    const KEEP: [&str; 2] = ["Clipboard", "Font"];
     let mut order: Vec<usize> = (0..groups.len()).rev().collect();
     if tab == "Home" {
+        order.retain(|i| groups.get(*i).is_none_or(|g| !KEEP.contains(&g.title.as_str())));
         let rank = |i: &usize| groups.get(*i).and_then(|g| HOME.iter().position(|t| *t == g.title)).unwrap_or(0);
         order.sort_by_key(rank);
     }
@@ -390,30 +394,31 @@ mod ui_tests {
     /// their commands: a button, then an item of a menu inside it.
     #[test]
     fn collapsed_group_stays_open_and_runs_its_commands() {
-        let mut h = harness(560.0);
-        assert_eq!(planned(&h.ctx, "Font"), Some(COLLAPSED), "Font folds at 560 pt");
+        let mut h = harness(720.0);
+        // Write: the Font group never folds; Paragraph folds to its lists and alignments, with a
+        // ▾ for the rest of the group.
+        assert_ne!(planned(&h.ctx, "Font"), Some(COLLAPSED), "Font keeps its size at 720 pt");
+        assert_eq!(planned(&h.ctx, "Paragraph"), Some(COLLAPSED), "Paragraph folds at 720 pt");
         h.state_mut().run("text.insert", json!({"text": "quiet words"})).unwrap();
-        h.state_mut().run("select.all", json!({})).unwrap();
-        h.get_by_role_and_label(Role::Button, "Font").click();
+        h.get_by_role_and_label(Role::Button, "Paragraph").click();
         h.run_steps(3);
-        let size = |h: &mut egui_kittest::Harness<'static, WordApp>| {
-            h.state_mut().session.run("format.state", &json!({})).ok().and_then(|v| v.get("size").and_then(serde_json::Value::as_f64))
+        let para = |h: &egui_kittest::Harness<'static, WordApp>| {
+            let s = &h.state().session;
+            s.doc.para_at(&s.sel.focus).map(|p| s.doc.styles.resolve_para(&p.props)).map(|r| (r.indent_left, r.space_before)).unwrap_or_default()
         };
-        let before = size(&mut h);
-        click_shown(&h, "Increase Font Size");
+        let before = para(&h);
+        click_shown(&h, "Increase Indent");
         h.run_steps(3);
-        assert_ne!(size(&mut h), before, "Increase Font Size ran");
-        assert!(shown(&h, "Change Case"), "the drop-down stays open after a click inside");
-        click_shown(&h, "Change Case");
+        assert!(para(&h).0 > before.0, "Increase Indent ran");
+        assert!(shown(&h, "Line and Paragraph Spacing"), "the drop-down stays open after a click inside");
+        click_shown(&h, "Line and Paragraph Spacing");
         h.run_steps(3);
-        // The item's accessible name carries its shortcut.
-        h.get_by_label_contains("UPPERCASE").click();
+        h.get_by_label_contains("Add Space Before Paragraph").click();
         h.run_steps(3);
-        let text = h.state().session.doc.plain_text(wordcraft_doc::StoryRef::Body);
-        assert!(!text.chars().any(|c| c.is_lowercase()), "UPPERCASE ran");
-        assert!(shown(&h, "Increase Font Size"), "a menu inside counts as inside");
-        h.get_by_role_and_label(Role::Button, "Font").click();
+        assert!(para(&h).1 > before.1, "Add Space Before Paragraph ran");
+        assert!(shown(&h, "Increase Indent"), "a menu inside counts as inside");
+        h.get_by_role_and_label(Role::Button, "Paragraph").click();
         h.run_steps(3);
-        assert!(!shown(&h, "Increase Font Size"), "the button closes it again");
+        assert!(!shown(&h, "Increase Indent"), "the button closes it again");
     }
 }

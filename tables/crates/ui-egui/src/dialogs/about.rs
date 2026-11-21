@@ -3,9 +3,9 @@ use super::Dialog;
 /// Help ▸ About GridCraft: the app, its contributors and the AI models that helped. The credits
 /// are compiled in (`crate::credits`, docs/contributors.md).
 pub(super) fn about(ui: &mut egui::Ui, d: &mut Dialog) {
-    // FondSoftware's Таблицы: the program and its developer; the licence texts ship with the app.
+    // FondSoftware's Table: the program and its developer; the licence texts ship with the app.
     let _ = &d.tab;
-    ui.heading("Таблицы");
+    ui.heading("Table");
     ui.label(egui::RichText::new("FS Office").weak());
     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
     ui.add_space(4.0);

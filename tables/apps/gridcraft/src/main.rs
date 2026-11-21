@@ -258,13 +258,13 @@ fn main() -> eframe::Result<()> {
     // The restart helper a self-update spawns: it finishes the swap and relaunches, then exits.
     if let Some(done) = craft_update::self_update::finish(&gridcraft_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
         if let Err(e) = done {
-            eprintln!("Таблицы update helper failed: {e}");
+            eprintln!("Table update helper failed: {e}");
             std::process::exit(1);
         }
         return Ok(());
     }
     if args.iter().any(|a| a == "--version" || a == "-V") {
-        println!("Таблицы {}", env!("CARGO_PKG_VERSION"));
+        println!("Table {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
     let mut control_port: Option<u16> = std::env::var("GRIDCRAFT_CONTROL_PORT").ok().and_then(|p| p.parse().ok());
@@ -298,7 +298,7 @@ fn main() -> eframe::Result<()> {
     if let Some(logger) = logger {
         match log_dir().filter(|_| prefs_enabled()) {
             Some(dir) => match logger.attach_dir(&dir) {
-                Ok(path) => log::info!("Таблицы {}, log file {}", env!("CARGO_PKG_VERSION"), path.display()),
+                Ok(path) => log::info!("Table {}, log file {}", env!("CARGO_PKG_VERSION"), path.display()),
                 // Standard error only by now (`attach_dir` gave up on the file); unlike `eprintln!`, never panics.
                 Err(e) => log::warn!("no log file: {e}"),
             },
@@ -328,7 +328,7 @@ fn main() -> eframe::Result<()> {
         app.open_path(f);
     }
     let mut viewport = egui::ViewportBuilder::default()
-        .with_title("Таблицы")
+        .with_title("Table")
         .with_inner_size([1440.0, 900.0])
         .with_min_inner_size([640.0, 420.0])
         .with_app_id("ai.storyteller.gridcraft")
@@ -422,9 +422,9 @@ fn main() -> eframe::Result<()> {
 mod packaging_tests {
     use gridcraft_engine::io::FileKind;
 
-    /// macOS Open With (`CFBundleDocumentTypes` of FondOffice's Таблицы.app, in the repository's
-    /// `packaging/macos/Info-sheets.plist.in`) offers Таблицы for Excel, OpenDocument and CSV
-    /// files, and Таблицы opens each of them. The GridCraft packaging files this test once read
+    /// macOS Open With (`CFBundleDocumentTypes` of FondOffice's Table.app, in the repository's
+    /// `packaging/macos/Info-sheets.plist.in`) offers Table for Excel, OpenDocument and CSV
+    /// files, and Table opens each of them. The GridCraft packaging files this test once read
     /// are not part of FondOffice.
     #[test]
     fn macos_offers_the_spreadsheets_tables_opens() {
@@ -436,7 +436,7 @@ mod packaging_tests {
             ("public.comma-separated-values-text", "csv"),
         ] {
             assert!(plist.contains(&format!("<string>{uti}</string>")), "Info-sheets.plist.in doesn't offer .{ext}");
-            assert!(FileKind::from_path(&format!("book.{ext}")).is_some(), "Таблицы doesn't open .{ext}");
+            assert!(FileKind::from_path(&format!("book.{ext}")).is_some(), "Table doesn't open .{ext}");
         }
     }
 }

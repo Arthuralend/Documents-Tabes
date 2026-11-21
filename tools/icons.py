@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """Write FondOffice's app icons (needs Pillow).
 
-- The two apps' icons are the owner's pictures. Документы: a cream tile with green and ochre
-  shapes and a page with a W, assets/app-icon/source/documents-w.webp, drawn on an opaque
-  background; `tile` cuts the rounded tile out with a smooth mask. Таблицы: a page with a green T tile,
-  assets/app-icon/source/tables.webp; `cut` takes the rounded tile out of a picture (its faint
-  shadow dropped, its body made opaque) and squares it.
+- The two apps' icons are the owner's pictures, rounded cream tiles on a transparent background:
+  Write, a blue W (assets/app-icon/source/write.webp), and Table, a green T
+  (assets/app-icon/source/table.webp). `cut` takes the tile out (its faint edge kept
+  anti-aliased) and squares it.
 - The suite icon is the owner's picture assets/app-icon/source/office-pro-max.png: the installer's
   and the disk image's icon.
 
 Outputs keep the old file names (wordcraft-*.png, wordcraft.ico/.icns, hicolor/…), so the build
-scripts and packaging find the documents app's icon unchanged; Таблицы's are sheets-* here and
-gridcraft-* in tables/assets/app-icon (the Таблицы program's own build).
+scripts and packaging find the documents app's icon unchanged; Table's are sheets-* here and
+gridcraft-* in tables/assets/app-icon (the Table program's own build).
 
 Usage: python3 tools/icons.py
 """
@@ -112,8 +111,8 @@ def android(name, src):
 
 
 def main():
-    documents = tile(os.path.join(SRC, "documents-w.webp"), (88, 93, 1157, 1163), 205)
-    tables = cut(os.path.join(SRC, "tables.webp"))
+    documents = cut(os.path.join(SRC, "write.webp"))
+    tables = cut(os.path.join(SRC, "table.webp"))
     # macOS: the tile a little larger than Apple's 824 px grid, so it reads big in the Dock.
     write_set(DIR, "wordcraft", documents, framed(documents, 1024, 0.9))
     write_set(DIR, "sheets", tables)

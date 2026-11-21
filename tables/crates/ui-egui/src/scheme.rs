@@ -1,4 +1,4 @@
-//! Таблицы looks like Документы: the colour scheme chosen in Документы (its settings' `theme`)
+//! Table looks like Документы: the colour scheme chosen in Документы (its settings' `theme`)
 //! colours the ribbon, panels, headers and accents here too. The sheet itself stays white, as in
 //! Excel. Документы' settings are read at start and every few seconds, so a change there follows.
 
@@ -6,7 +6,7 @@ use std::sync::RwLock;
 
 use egui::Color32;
 
-/// One of Документы' colour schemes (the colours Таблицы takes from it).
+/// One of Документы' colour schemes (the colours Table takes from it).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Scheme {
     pub dark: bool,
@@ -637,7 +637,7 @@ const SCHEMES: &[(&str, Scheme)] = &[
 /// Документы' default.
 const DEFAULT: &str = "ivory";
 
-/// Документы' own scheme for one side: Ivory (light) or Charcoal (dark) — the colours Таблицы
+/// Документы' own scheme for one side: Ivory (light) or Charcoal (dark) — the colours Table
 /// wears when Документы follows the system and the system asks for the other side.
 pub fn house(dark: bool) -> Option<Scheme> {
     let code = if dark { "charcoal" } else { "ivory" };

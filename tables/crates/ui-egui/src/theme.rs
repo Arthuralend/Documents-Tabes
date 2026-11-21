@@ -177,7 +177,7 @@ impl Tokens {
 
     /// The palette for `dark`, coloured by Документы' scheme when it has that side
     /// ([`crate::scheme`]); otherwise by Документы' own Ivory (light) or Charcoal (dark), so
-    /// Таблицы always wears the colours of Документы.
+    /// Table always wears the colours of Документы.
     fn palette(dark: bool) -> Tokens {
         let t = Tokens::base(dark);
         match crate::scheme::current() {

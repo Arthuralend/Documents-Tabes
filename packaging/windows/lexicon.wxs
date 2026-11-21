@@ -25,8 +25,8 @@
       Compressed="yes"
       Language="1033"
       Codepage="1251">
-    <!-- 1251: the Cyrillic name Таблицы in the installer's tables. -->
-    <SummaryInformation Description="FS Office: Write and Таблицы" Manufacturer="FantasticSoftware" Codepage="1251" />
+    <!-- 1251: kept for any Cyrillic text in the installer's tables. -->
+    <SummaryInformation Description="FS Office: Write and Table" Manufacturer="FantasticSoftware" Codepage="1251" />
     <!-- Same-version upgrades let successive pre-releases of one X.Y.Z replace each other
          (MSI versions are numeric, so 1.2.3-rc.1 and 1.2.3-rc.2 are both 1.2.3). -->
     <MajorUpgrade AllowSameVersionUpgrades="yes"
@@ -79,11 +79,11 @@
 
         <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\Write.exe" Value="[#LexiconExe]" Type="string" />
       </Component>
-      <!-- Таблицы: the spreadsheet app, with its own Start menu shortcut and icon. -->
+      <!-- Table: the spreadsheet app, with its own Start menu shortcut and icon. -->
       <Component Id="TablesApp" Guid="7C1B3E5A-2F84-4D6B-9A37-5E0C8B21D4F6">
         <File Id="TablesExe" Source="$(var.BinDir)\Tables.exe" KeyPath="yes">
-          <Shortcut Id="TablesShortcut" Directory="ProgramMenuFolder" Name="Таблицы"
-              Description="Таблицы" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
+          <Shortcut Id="TablesShortcut" Directory="ProgramMenuFolder" Name="Table"
+              Description="Table" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
               Icon="SheetsIcon.ico" IconIndex="0" />
         </File>
       </Component>

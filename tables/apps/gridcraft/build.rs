@@ -14,8 +14,8 @@ fn main() {
     }
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/gridcraft.ico")
-        .set("ProductName", "Таблицы")
-        .set("FileDescription", "Таблицы")
+        .set("ProductName", "Table")
+        .set("FileDescription", "Table")
         .set("CompanyName", "FondSoftware")
         .set("LegalCopyright", "FondSoftware. MIT OR Apache-2.0.")
         .set("OriginalFilename", "Tables.exe")

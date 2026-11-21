@@ -39,7 +39,7 @@ IDENTITY="${MACOS_SIGN_IDENTITY:--}"
 SHORT_VERSION="${VERSION%%-*}"
 WORK="$CARGO_TARGET_DIR/macos-package"
 APP="$WORK/Write.app"
-SHEETS="$WORK/Таблицы.app"
+SHEETS="$WORK/Table.app"
 DMG="$DIST/Lexicon-$VERSION-macos-$ARCH.dmg"
 
 NOTARIZE=0
@@ -58,7 +58,7 @@ if [ "$SKIP_BUILD" = 0 ]; then
   args=()
   for t in "${TARGETS[@]}"; do args+=(--target "$t"); done
   (cd "$ROOT" && cargo build --release --locked -p wordcraft "${args[@]}")
-  # Таблицы: the spreadsheet app (tables/, its own workspace and target folder).
+  # Table: the spreadsheet app (tables/, its own workspace and target folder).
   (cd "$ROOT/tables" && CARGO_TARGET_DIR="$CARGO_TARGET_DIR/tables" cargo build --release -p gridcraft "${args[@]}")
 fi
 
@@ -106,7 +106,7 @@ notarize() {
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # The executable carries the app's name (CFBundleExecutable): macOS names the app menu's About,
-# Hide and Quit items after it, so it is Write (Таблицы), never Lexicon.
+# Hide and Quit items after it, so it is Write (Table), never Lexicon.
 cp "$WORK/bin/wordcraft" "$APP/Contents/MacOS/Write"
 cp "$ROOT/assets/app-icon/wordcraft.icns" "$APP/Contents/Resources/Write.icns"
 # Licences of the embedded craft-fonts fonts (only when built with CRAFT_FONTS_DIR).
@@ -125,15 +125,15 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
 plutil -lint "$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
 
-# ---- Таблицы.app: the spreadsheet app ---------------------------------------------------------
+# ---- Table.app: the spreadsheet app ---------------------------------------------------------
 echo "==> assembling $SHEETS"
 mkdir -p "$SHEETS/Contents/MacOS" "$SHEETS/Contents/Resources"
-cp "$WORK/bin/tables" "$SHEETS/Contents/MacOS/Таблицы"
+cp "$WORK/bin/tables" "$SHEETS/Contents/MacOS/Table"
 cp "$ROOT/assets/app-icon/sheets.icns" "$SHEETS/Contents/Resources/Tables.icns"
 cp "$ROOT/tables/LICENSE-MIT" "$ROOT/tables/LICENSE-APACHE" "$ROOT/tables/NOTICE" "$SHEETS/Contents/Resources/"
 for loc in en ru hy; do
   mkdir -p "$SHEETS/Contents/Resources/$loc.lproj"
-  printf 'CFBundleDisplayName = "Таблицы";\nCFBundleName = "Таблицы";\n' > "$SHEETS/Contents/Resources/$loc.lproj/InfoPlist.strings"
+  printf 'CFBundleDisplayName = "Table";\nCFBundleName = "Table";\n' > "$SHEETS/Contents/Resources/$loc.lproj/InfoPlist.strings"
 done
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
   -e "s/@BUILD_SHA@/${WORDCRAFT_BUILD_SHA:-unknown}/g" \
@@ -151,7 +151,7 @@ xattr -cr "$SHEETS"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Write"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS/Contents/MacOS/Таблицы"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS/Contents/MacOS/Table"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$SHEETS"
 codesign --verify --strict --deep --verbose=2 "$SHEETS"
 
@@ -168,7 +168,7 @@ echo "==> building $DMG"
 STAGE="$WORK/dmg"
 mkdir -p "$STAGE"
 ditto "$APP" "$STAGE/Write.app"
-ditto "$SHEETS" "$STAGE/Таблицы.app"
+ditto "$SHEETS" "$STAGE/Table.app"
 ln -s /Applications "$STAGE/Applications"
 rm -f "$DMG"
 # Retries an hdiutil verb that attaches a device: on CI runners it fails now and then with

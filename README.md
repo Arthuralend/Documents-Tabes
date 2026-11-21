@@ -4,7 +4,7 @@
   <b>Текстовый процессор с проверкой орфографии на русском и английском — для Android, Windows, macOS, Linux и браузера.</b><br>
   <i>A word processor with Russian and English spelling, for Android, Windows, macOS, Linux and the web.</i><br>
   <b>Write</b> — текстовый процессор пакета <b>FS Office</b>. Разработчик — <b>FantasticSoftware</b>, armenoid@gmail.com.
-  В пакет входят также <b>Таблицы</b> (FondSoftware).
+  В пакет входит также <b>Table</b> — электронные таблицы (FondSoftware).
 </p>
 
 Write основан на [WordCraft](https://github.com/storytold/wordcraft) — открытом текстовом
@@ -66,7 +66,7 @@ Write основан на [WordCraft](https://github.com/storytold/wordcraft) �
    (или версию без установки: **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-Windows-portable.zip**).
 2. Запустите `FS-Office-Windows.msi`. Если Windows покажет «Система Windows защитила ваш компьютер»,
    нажмите «Подробнее» → «Выполнить в любом случае»: установщик не подписан платным сертификатом.
-3. Write и «Таблицы» появятся в меню «Пуск». Для документов Word Write можно выбрать в
+3. Write и Table появятся в меню «Пуск». Для документов Word Write можно выбрать в
    «Файл › Параметры › Общие › Сделать Write приложением по умолчанию».
 
 Требования: Windows 10 или 11, 64-разрядная.
@@ -74,11 +74,11 @@ Write основан на [WordCraft](https://github.com/storytold/wordcraft) �
 ## Установка на macOS
 
 1. Скачайте **https://github.com/Arthuralend/Documents-Tabes/releases/download/latest/FS-Office-macOS.dmg**,
-   откройте его и перетащите Write и «Таблицы» в «Программы».
+   откройте его и перетащите Write и Table в «Программы».
 2. Приложение не заверено Apple, поэтому при первом запуске macOS его не откроет. Откройте
    «Системные настройки › Конфиденциальность и безопасность» и нажмите «Всё равно открыть» рядом
    с сообщением о программе. Если macOS пишет, что приложение «повреждено», выполните в Терминале:
-   `xattr -dr com.apple.quarantine /Applications/Write.app /Applications/Таблицы.app`
+   `xattr -dr com.apple.quarantine /Applications/Write.app /Applications/Table.app`
 
 Требования: macOS 11 (Big Sur) или новее, Apple Silicon или Intel.
 

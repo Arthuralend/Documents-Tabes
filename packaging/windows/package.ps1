@@ -66,7 +66,7 @@ if (-not $SkipBuild) {
   # Fail the build (rather than warn) if the icon/VERSIONINFO can't be embedded.
   $env:WORDCRAFT_REQUIRE_WINRES = '1'
   Invoke-Native "cargo build ($Target)" { cargo build --release --locked -p wordcraft --target $Target }
-  # Таблицы: the spreadsheet app (tables/, its own workspace and target folder).
+  # Table: the spreadsheet app (tables/, its own workspace and target folder).
   $TablesTarget = Join-Path $TargetDir 'tables'
   Push-Location (Join-Path $Root 'tables')
   try {
@@ -120,8 +120,8 @@ function ConvertTo-RtfText([string] $Text) {
   return $sb.ToString()
 }
 $paragraphs = [System.Collections.Generic.List[string]]::new()
-$paragraphs.Add('\b FS Office: Write (FantasticSoftware) and Таблицы (FondSoftware)\b0')
-$paragraphs.Add((ConvertTo-RtfText 'Write by FantasticSoftware and Таблицы by FondSoftware, based on the open-source WordCraft and GridCraft, are dual-licensed under the MIT License or the Apache License, Version 2.0, at your option. Both license texts follow. Bundled fonts, dictionaries and other third-party material keep their own open licenses, listed in NOTICE and ATTRIBUTION.md at https://github.com/Arthuralend/Documents-Tabes.'))
+$paragraphs.Add('\b FS Office: Write (FantasticSoftware) and Table (FondSoftware)\b0')
+$paragraphs.Add((ConvertTo-RtfText 'Write by FantasticSoftware and Table by FondSoftware, based on the open-source WordCraft and GridCraft, are dual-licensed under the MIT License or the Apache License, Version 2.0, at your option. Both license texts follow. Bundled fonts, dictionaries and other third-party material keep their own open licenses, listed in NOTICE and ATTRIBUTION.md at https://github.com/Arthuralend/Documents-Tabes.'))
 foreach ($file in 'LICENSE-MIT', 'LICENSE-APACHE') {
   $title = $true  # each file opens with its license's name: show it bold
   foreach ($para in ((Get-Content -Raw (Join-Path $Root $file)) -split '\r?\n\s*\r?\n')) {

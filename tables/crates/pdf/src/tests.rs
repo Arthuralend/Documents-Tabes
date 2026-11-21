@@ -301,8 +301,7 @@ fn ascii_info_strings_stay_literal_and_escaped() {
     doc.info.title = r"Q1 (draft) a\b".into();
     let pdf = doc.finish();
     assert!(find(&pdf, br"/Title (Q1 \(draft\) a\\b)").is_some());
-    // "Таблицы PDF" is not ASCII: a UTF-16BE text string.
-    assert!(find(&pdf, b"/Producer <FEFF042204300431043B04380446044B0020005000440046>").is_some());
+    assert!(find(&pdf, b"/Producer (Table PDF)").is_some());
 }
 
 #[test]

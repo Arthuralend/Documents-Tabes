@@ -1567,10 +1567,12 @@ pub fn apply_animations(ctx: &egui::Context, on: bool) {
 fn visuals(t: &Tokens) -> Visuals {
     let mut v = if t.dark { Visuals::dark() } else { Visuals::light() };
     v.panel_fill = t.ribbon;
-    v.window_fill = t.menu;
+    // Write: matte menus: a warm fill between the menu's white and the ribbon, a quiet border and
+    // a short, soft shadow instead of a glossy floating one.
+    v.window_fill = t.menu.lerp_to_gamma(t.ribbon, 0.6);
     v.extreme_bg_color = t.input;
     v.faint_bg_color = t.panel;
-    v.window_stroke = Stroke::new(1.0, t.border_strong);
+    v.window_stroke = Stroke::new(1.0, t.border);
     v.window_corner_radius = CornerRadius::same(12);
     v.menu_corner_radius = CornerRadius::same(10);
     v.selection.bg_fill = t.selection;
@@ -1594,8 +1596,8 @@ fn visuals(t: &Tokens) -> Visuals {
     v.widgets.active.corner_radius = CornerRadius::same(6);
     v.widgets.open.bg_fill = t.pressed;
     v.widgets.open.weak_bg_fill = t.pressed;
-    v.popup_shadow = egui::Shadow { offset: [0, 4], blur: 16, spread: 0, color: Color32::from_black_alpha(if t.dark { 120 } else { 40 }) };
-    v.window_shadow = egui::Shadow { offset: [0, 8], blur: 28, spread: 0, color: Color32::from_black_alpha(if t.dark { 140 } else { 50 }) };
+    v.popup_shadow = egui::Shadow { offset: [0, 2], blur: 6, spread: 0, color: Color32::from_black_alpha(if t.dark { 70 } else { 18 }) };
+    v.window_shadow = egui::Shadow { offset: [0, 3], blur: 12, spread: 0, color: Color32::from_black_alpha(if t.dark { 90 } else { 24 }) };
     v
 }
 

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Таблицы: the spreadsheet app (tables/, built from the open-source GridCraft). Template: packaging/macos/package.sh substitutes @VERSION@ (full, e.g. 0.2.0-rc.1),
+<!-- Table: the spreadsheet app (tables/, built from the open-source GridCraft). Template: packaging/macos/package.sh substitutes @VERSION@ (full, e.g. 0.2.0-rc.1),
      @SHORT_VERSION@ (numeric X.Y.Z) and @BUILD_SHA@. -->
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>Таблицы</string>
+  <string>Table</string>
   <key>CFBundleName</key>
-  <string>Таблицы</string>
+  <string>Table</string>
   <key>CFBundleExecutable</key>
-  <string>Таблицы</string>
+  <string>Table</string>
   <key>CFBundleIdentifier</key>
   <string>io.github.arthuralend.lexicon.tables</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -27,9 +27,9 @@
   <!-- Home › Dictate: macOS ends an app that uses the microphone or speech recognition without
        these. -->
   <key>NSMicrophoneUsageDescription</key>
-  <string>Таблицы listens to the microphone while you dictate text.</string>
+  <string>Table listens to the microphone while you dictate text.</string>
   <key>NSSpeechRecognitionUsageDescription</key>
-  <string>Таблицы turns your speech into text while you dictate.</string>
+  <string>Table turns your speech into text while you dictate.</string>
   <key>LexiconVersion</key>
   <string>@VERSION@</string>
   <key>LexiconBuildCommit</key>
@@ -54,7 +54,7 @@
   <!-- Documents Lexicon opens (system type declarations). -->
   <key>CFBundleDocumentTypes</key>
   <array>
-    <!-- Таблицы opens spreadsheets. -->
+    <!-- Table opens spreadsheets. -->
     <dict>
       <key>CFBundleTypeName</key>
       <string>Spreadsheet</string>

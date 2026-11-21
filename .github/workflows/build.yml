@@ -149,7 +149,7 @@ jobs:
           cp dl/Lexicon-*-windows-x64.msi rel/FS-Office-Windows.msi
           cp dl/Lexicon-*-windows-x64-portable.zip rel/FS-Office-Windows-portable.zip
           cp dl/Lexicon-*-macos-universal.dmg rel/FS-Office-macOS.dmg
-          notes="FS Office: Write (FantasticSoftware) and Таблицы $NAME.
+          notes="FS Office: Write (FantasticSoftware) and Table $NAME.
           - Android 8.0+ (arm64): FS-Office-Write.apk
           - Windows 10/11 (x64): FS-Office-Windows.msi (installer) or FS-Office-Windows-portable.zip (no install)
           - macOS 11+ (Apple silicon and Intel): FS-Office-macOS.dmg

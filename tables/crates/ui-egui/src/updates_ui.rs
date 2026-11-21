@@ -26,7 +26,7 @@ impl Default for Runtime {
 
 /// Ask for a check; the next frame's `tick` starts it. A manual one reports every outcome.
 pub(crate) fn start(app: &mut SheetApp, manual: bool) {
-    // FondSoftware's Таблицы updates with Документы, never from GridCraft's releases.
+    // FondSoftware's Table updates with Документы, never from GridCraft's releases.
     if UPDATES_OFF {
         let _ = (app, manual);
         return;
@@ -48,13 +48,13 @@ pub(crate) fn tick(app: &mut SheetApp, ctx: &egui::Context) {
     rt.updater.tick(ctx);
     let lang = app.ui.language;
     let outcome = match rt.updater.status() {
-        Status::UpToDate => Some(lang.tr("Таблицы {version} is up to date.").replace("{version}", VERSION)),
+        Status::UpToDate => Some(lang.tr("Table {version} is up to date.").replace("{version}", VERSION)),
         Status::Failed(e) => Some(lang.tr("Could not check for updates: {error}").replace("{error}", e)),
         Status::Idle | Status::Checking => None,
     };
     if let Some(message) = outcome {
         rt.updater.dismiss_status();
-        app.message = Some(("Таблицы".into(), message));
+        app.message = Some(("Table".into(), message));
     }
 }
 

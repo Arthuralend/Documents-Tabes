@@ -100,8 +100,18 @@ impl Pen<'_> {
     }
 }
 
+/// Write: icons in matte colours: `c` drawn a little greyer (it keeps its alpha), so accents
+/// and companion colours read as flat ink rather than glossy.
+fn matte(c: Color32) -> Color32 {
+    let [r, g, b, a] = c.to_srgba_unmultiplied();
+    let grey = (0.30 * f32::from(r) + 0.59 * f32::from(g) + 0.11 * f32::from(b)).clamp(0.0, 255.0);
+    let mix = |v: u8| (f32::from(v) * 0.72 + grey * 0.28).round().clamp(0.0, 255.0) as u8;
+    Color32::from_rgba_unmultiplied(mix(r), mix(g), mix(b), a)
+}
+
 /// Paint icon `name` into `r`. `c` is the line colour; the accent comes from the theme.
 pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
+    let (c, accent) = (matte(c), matte(accent));
     let pen = Pen { p, r, c, a: accent, w: 1.15 };
     if let Some(kind) = name.strip_prefix("shape.")
         && shape(&pen, kind)
@@ -110,10 +120,10 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
     }
     let a = accent;
     // Muted, earthy companions to the accent: a quiet, editorial set rather than primary colours.
-    let red = Color32::from_rgb(0xBF, 0x4A, 0x3C);
-    let yellow = Color32::from_rgb(0xD9, 0xAE, 0x3F);
-    let green = Color32::from_rgb(0x5B, 0x8A, 0x5F);
-    let orange = Color32::from_rgb(0xCC, 0x78, 0x4A);
+    let red = matte(Color32::from_rgb(0xBF, 0x4A, 0x3C));
+    let yellow = matte(Color32::from_rgb(0xD9, 0xAE, 0x3F));
+    let green = matte(Color32::from_rgb(0x5B, 0x8A, 0x5F));
+    let orange = matte(Color32::from_rgb(0xCC, 0x78, 0x4A));
     match name {
         // Clipboard
         "paste" => {

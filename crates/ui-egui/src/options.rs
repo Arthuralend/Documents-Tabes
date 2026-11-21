@@ -113,33 +113,29 @@ pub fn page(app: &mut WordApp, ui: &mut Ui) {
     // Lexicon: no Agents pane.
     let shown = PANES.into_iter().filter(|p| *p != "agents");
     let current = if shown.clone().any(|p| p == app.ui.options_pane) { app.ui.options_pane.clone() } else { "general".to_string() };
-    ui.horizontal_top(|ui| {
+    // Write: in a narrow window (a half screen) the panes' list goes above the settings, which
+    // then take the whole width and wrap, so every setting stays in view.
+    let narrow = ui.available_width() < 170.0 + 33.0 + 460.0;
+    let pane_button = |ui: &mut Ui, app: &mut WordApp, id: &str, width: f32| {
+        let label = tl!(pane_label(id));
+        let active = current == id;
+        let (r, resp) = ui.allocate_exact_size(vec2(width, 30.0), egui::Sense::click());
+        resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, active, label));
+        if active {
+            ui.painter().rect_filled(r, 4.0, t.checked);
+        } else if resp.hovered() {
+            ui.painter().rect_filled(r, 4.0, t.hover);
+        }
+        let font = if active { semibold(14.0) } else { crate::theme::regular(14.0) };
+        // Long translations stay inside the row; WidgetInfo above keeps the full name.
+        ui.painter().with_clip_rect(r).text(egui::pos2(r.min.x + 12.0, r.center().y), egui::Align2::LEFT_CENTER, label, font, t.text);
+        if resp.clicked() {
+            app.ui.options_pane = id.to_string();
+        }
+    };
+    let settings = |ui: &mut Ui, app: &mut WordApp, width: f32| {
         ui.vertical(|ui| {
-            ui.set_width(170.0);
-            for id in shown {
-                let label = tl!(pane_label(id));
-                let active = current == id;
-                let (r, resp) = ui.allocate_exact_size(vec2(170.0, 30.0), egui::Sense::click());
-                resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, active, label));
-                if active {
-                    ui.painter().rect_filled(r, 4.0, t.checked);
-                } else if resp.hovered() {
-                    ui.painter().rect_filled(r, 4.0, t.hover);
-                }
-                let font = if active { semibold(14.0) } else { crate::theme::regular(14.0) };
-                // Long translations stay inside the row; WidgetInfo above keeps the full name.
-                ui.painter().with_clip_rect(r).text(egui::pos2(r.min.x + 12.0, r.center().y), egui::Align2::LEFT_CENTER, label, font, t.text);
-                if resp.clicked() {
-                    app.ui.options_pane = id.to_string();
-                }
-            }
-        });
-        ui.add_space(12.0);
-        let (line, _) = ui.allocate_exact_size(vec2(1.0, 420.0), egui::Sense::hover());
-        ui.painter().rect_filled(line, 0.0, t.border);
-        ui.add_space(20.0);
-        ui.vertical(|ui| {
-            ui.set_max_width(640.0);
+            ui.set_max_width(width);
             match current.as_str() {
                 "display" => display(app, ui),
                 "proofing" => proofing(app, ui),
@@ -150,6 +146,34 @@ pub fn page(app: &mut WordApp, ui: &mut Ui) {
                 _ => general(app, ui),
             }
         });
+    };
+    if narrow {
+        ui.horizontal_wrapped(|ui| {
+            for id in shown {
+                let w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(tl!(pane_label(id)).to_string(), semibold(14.0), t.text).size().x) + 26.0;
+                pane_button(ui, app, id, w);
+            }
+        });
+        ui.add_space(8.0);
+        ui.separator();
+        ui.add_space(8.0);
+        let width = ui.available_width();
+        settings(ui, app, width);
+        return;
+    }
+    ui.horizontal_top(|ui| {
+        ui.vertical(|ui| {
+            ui.set_width(170.0);
+            for id in shown {
+                pane_button(ui, app, id, 170.0);
+            }
+        });
+        ui.add_space(12.0);
+        let (line, _) = ui.allocate_exact_size(vec2(1.0, 420.0), egui::Sense::hover());
+        ui.painter().rect_filled(line, 0.0, t.border);
+        ui.add_space(20.0);
+        let width = ui.available_width().min(640.0);
+        settings(ui, app, width);
     });
 }
 
@@ -623,7 +647,7 @@ fn animations_picker(app: &mut WordApp, ui: &mut Ui) {
 fn choices<R>(ui: &mut Ui, id: &str, add: impl FnOnce(&mut Ui) -> R) {
     ui.push_id(id, |ui| {
         ui.vertical(|ui| {
-            ui.set_max_width(560.0);
+            ui.set_max_width(ui.available_width().min(560.0));
             ui.horizontal_wrapped(|ui| {
                 add(ui);
             });

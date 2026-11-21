@@ -669,6 +669,15 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
     if web {
         scale = PX_PER_PT * v.zoom.clamp(0.1, 5.0);
     }
+    // Write (the app sets `new_first_line_indent`): a window narrower than the page at the chosen
+    // zoom shrinks the page with it, so the whole width of the paper stays in view; a wider
+    // window gives the chosen zoom back.
+    if !web && v.fit.is_empty() && app.session.new_first_line_indent.is_some() {
+        let fits = (avail.x - 2.0 * GAP - 20.0) / maxw;
+        if fits.is_finite() && fits > 0.0 {
+            scale = scale.min(fits.max(0.1));
+        }
+    }
     if !scale.is_finite() {
         scale = PX_PER_PT;
     }
@@ -6260,5 +6269,24 @@ mod paper_grain_tests {
         assert!(!a.ui.paper_texture);
         a.run("ui.paperTexture", serde_json::json!({})).unwrap();
         assert!(a.ui.paper_texture);
+    }
+}
+
+#[cfg(test)]
+mod narrow_window_tests {
+    /// Write: a window narrower than the page at the chosen zoom shrinks the page with it, so
+    /// the paper's whole width stays in view; a wide window keeps the chosen zoom.
+    #[test]
+    fn the_page_shrinks_with_a_narrow_window() {
+        let mut s = wordcraft_engine::Session::new(wordcraft_doc::Document::from_text("Text"));
+        s.new_first_line_indent = Some(wordcraft_engine::NEW_FIRST_LINE_INDENT);
+        let mut a = crate::WordApp::new(s, crate::Services::default());
+        a.session.view.zoom = 1.0;
+        let layout = a.session.layout();
+        let wide = super::geometry(&a, &layout, egui::vec2(2000.0, 900.0));
+        assert!((wide.scale - super::PX_PER_PT).abs() < 0.001, "the chosen zoom: {}", wide.scale);
+        let narrow = super::geometry(&a, &layout, egui::vec2(500.0, 900.0));
+        let page_w = narrow.rects.first().map_or(f32::MAX, |r| r.width());
+        assert!(narrow.scale < wide.scale && page_w <= 500.0, "the page fits: {page_w} at {}", narrow.scale);
     }
 }

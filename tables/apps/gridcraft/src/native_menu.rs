@@ -178,7 +178,7 @@ fn tree() -> Vec<(&'static str, Vec<Entry>)> {
                 ("-", "", None),
             ],
         ),
-        ("Help", vec![("About Таблицы", "dialog:about", None)]),
+        ("Help", vec![("About Table", "dialog:about", None)]),
     ]
 }
 
@@ -213,8 +213,8 @@ fn select_theme(app: &mut SheetApp, id: &str) -> bool {
 impl NativeMenu {
     pub fn install(ctx: &egui::Context) -> NativeMenu {
         let menu = Menu::new();
-        let app_menu = Submenu::new("Таблицы", true);
-        let about = MenuItem::with_id("dialog:about", "About Таблицы", true, None);
+        let app_menu = Submenu::new("Table", true);
+        let about = MenuItem::with_id("dialog:about", "About Table", true, None);
         let _ = app_menu.append_items(&[
             &about,
             &PredefinedMenuItem::separator(),
@@ -224,7 +224,7 @@ impl NativeMenu {
             &PredefinedMenuItem::hide_others(None),
             &PredefinedMenuItem::show_all(None),
             &PredefinedMenuItem::separator(),
-            &MenuItem::with_id(QUIT, "Quit Таблицы", true, Accelerator::from_str("CMD+Q").ok()),
+            &MenuItem::with_id(QUIT, "Quit Table", true, Accelerator::from_str("CMD+Q").ok()),
         ]);
         let _ = menu.append(&app_menu);
         let mut theme_items = Vec::new();
