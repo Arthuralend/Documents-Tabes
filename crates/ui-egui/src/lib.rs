@@ -2177,11 +2177,8 @@ impl WordApp {
         }
         if !self.recovery_seen && self.session.recovery_ready() {
             self.recovery_seen = true;
-            // Write always starts on a new document: recovery copies wait in File › Recover,
-            // and the status line says so.
-            if !self.session.recovery_documents().is_empty() {
-                self.status(tl!("Unsaved copies can be restored in File › Recover."));
-            }
+            // Write always starts on a new document: recovery copies wait quietly in
+            // File › Recover (a notice on the status line ran over its controls).
         }
         if let Some(wait) = self.session.recovery_wait() {
             ctx.request_repaint_after(wait);

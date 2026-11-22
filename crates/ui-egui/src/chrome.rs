@@ -330,39 +330,7 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
                     if resp.on_hover_text(format!("{} — set your name in File › Options", app.session.author)).clicked() {
                         let _ = app.run("ui.backstage", json!({"value": true, "page": "options", "pane": "general"}));
                     }
-                    ui.add_space(8.0);
-                    // Search ("Tell me").
-                    let (r, resp) = ui.allocate_exact_size(vec2(260.0, control_h), Sense::click());
-                    ui.painter().rect(r, 6.0, if resp.hovered() { t.input } else { t.ribbon }, Stroke::new(1.0, t.border), egui::StrokeKind::Inside);
-                    icons::paint(
-                        ui.painter(),
-                        Rect::from_center_size(pos2(r.min.x + 16.0, r.center().y), vec2(16.0, 16.0)),
-                        "search",
-                        t.text_dim,
-                        t.accent,
-                    );
-                    let ph = tl!("Search commands and help");
-                    let pfont = TypeRung::Control.regular();
-                    let ptrack = TypeRung::Control.tracking();
-                    paint_text(
-                        ui.painter(),
-                        pos2(r.min.x + 30.0, r.center().y - TypeRung::Control.line_height() / 2.0),
-                        Align2::LEFT_TOP,
-                        ph,
-                        &pfont,
-                        ptrack,
-                        t.text_dim,
-                    );
-                    if app.ui.keytips == crate::keytips::Phase::Tabs {
-                        app.keytip_rects.push((r, crate::keytips::SEARCH_LETTER.to_string()));
-                    }
-                    let tip = match crate::widgets::shortcut_text(app, "tools.search") {
-                        k if k.is_empty() => tl!("Search").to_string(),
-                        k => format!("{} ({k})", tl!("Search")),
-                    };
-                    if resp.on_hover_text(tip).clicked() {
-                        let _ = app.run("tools.search", json!({}));
-                    }
+                    // Write: no Search box here (Search commands stays on its keyboard shortcut).
                     right_start = ui.min_rect().min.x;
                 });
             });
@@ -439,6 +407,22 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                 } else {
                     l.caret_on(&app.session.sel.focus, app.session.page_hint).map(|c| c.page + 1).unwrap_or(1)
                 };
+                // Write: the controls on the right keep their room; the texts on the left take
+                // what is left, in order (page, words, …), and one that doesn't fit is left out
+                // instead of being drawn over the controls (the language goes first).
+                let focus_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(tl!("Focus").to_string(), regular(11.5), t.text_dim).size().x);
+                let right_w = 44.0 + 18.0 * 2.0 + 110.0 + 10.0 + 3.0 * 22.0 + 8.0 + (focus_w + 26.0).max(56.0) + 8.0 * 4.0 + 24.0;
+                let budget = std::cell::Cell::new(ui.available_width() - right_w);
+                let fits = |ui: &Ui, s: &str| -> bool {
+                    let w = text_width(ui.painter(), s, &TypeRung::Caption.regular(), TypeRung::Caption.tracking(), t.text_dim) + 15.0;
+                    if w <= budget.get() {
+                        budget.set(budget.get() - w);
+                        true
+                    } else {
+                        budget.set(-1.0);
+                        false
+                    }
+                };
                 let st = |ui: &mut Ui, s: &str| {
                     let font = TypeRung::Caption.regular();
                     let track = TypeRung::Caption.tracking();
@@ -448,10 +432,8 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, s));
                     resp
                 };
-                if st(ui, &crate::i18n::fmt(tl!("Page {page} of {pages}"), &[("page", &page.to_string()), ("pages", &l.pages.len().to_string())]))
-                    .on_hover_text(tl!("Go To (⌘⌥G)"))
-                    .clicked()
-                {
+                let page_text = crate::i18n::fmt(tl!("Page {page} of {pages}"), &[("page", &page.to_string()), ("pages", &l.pages.len().to_string())]);
+                if fits(ui, &page_text) && st(ui, &page_text).on_hover_text(tl!("Go To (⌘⌥G)")).clicked() {
                     let _ = app.run("ui.dialog", json!({"name": "goto"}));
                 }
                 let words = app.cached_word_count();
@@ -462,10 +444,10 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                     let sw = wordcraft_doc::count_words(&app.session.selected_text());
                     crate::i18n::fmt(tl!("{selected} of {words} words"), &[("selected", &sw.to_string()), ("words", &words.to_string())])
                 };
-                if st(ui, &wtxt).clicked() {
+                if fits(ui, &wtxt) && st(ui, &wtxt).clicked() {
                     let _ = app.run("ui.dialog", json!({"name": "wordCount"}));
                 }
-                if app.session.sel.focus.story != StoryRef::Body && !crate::canvas::in_text_box(app) {
+                if app.session.sel.focus.story != StoryRef::Body && !crate::canvas::in_text_box(app) && fits(ui, tl!("Editing header/footer")) {
                     st(ui, tl!("Editing header/footer"));
                 }
                 // The language at the caret; a click sets the proofing language (Review › Language).
@@ -490,19 +472,25 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                     ),
                     (None, None) => tl!("Language").to_string(),
                 };
-                let resp = st(ui, &shown).on_hover_text(tip);
-                egui::Popup::menu(&resp).show(|ui| {
-                    ui.set_min_width(200.0);
-                    crate::ribbon::language_menu(ui, app);
-                });
-                if app.session.doc.settings.track_changes {
+                if fits(ui, &shown) {
+                    let resp = st(ui, &shown).on_hover_text(tip);
+                    egui::Popup::menu(&resp).show(|ui| {
+                        ui.set_min_width(200.0);
+                        crate::ribbon::language_menu(ui, app);
+                    });
+                }
+                if app.session.doc.settings.track_changes && fits(ui, tl!("Track Changes: On")) {
                     st(ui, tl!("Track Changes: On"));
                 }
-                if app.session.prefs.overtype && st(ui, tl!("Overtype")).on_hover_text(tl!("Click to switch back to inserting")).clicked() {
+                if app.session.prefs.overtype
+                    && fits(ui, tl!("Overtype"))
+                    && st(ui, tl!("Overtype")).on_hover_text(tl!("Click to switch back to inserting")).clicked()
+                {
                     let _ = app.run("text.overtype", json!({"value": false}));
                 }
                 if let Some((msg, at)) = &app.status_msg
                     && crate::now_ms() - at < 6000.0
+                    && fits(ui, msg)
                 {
                     let font = TypeRung::Caption.regular();
                     let track = TypeRung::Caption.tracking();
@@ -569,7 +557,6 @@ pub fn status_bar(app: &mut WordApp, ui: &mut Ui) {
                     }
                     ui.add_space(8.0);
                     let focus = tl!("Focus");
-                    let focus_w = ui.ctx().fonts_mut(|f| f.layout_no_wrap(focus.to_string(), regular(11.5), t.text_dim).size().x);
                     let (r, resp) = ui.allocate_exact_size(vec2((focus_w + 26.0).max(56.0), 20.0), Sense::click());
                     if resp.hovered() {
                         ui.painter().rect_filled(r, 3.0, t.hover);

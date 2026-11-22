@@ -2725,19 +2725,37 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             false
         }
         Dialog::SaveChanges { name, message, .. } => {
-            ui.label(egui::RichText::new(crate::i18n::fmt(tl!("Do you want to save changes to {name}?"), &[("name", name)])).font(semibold(15.0)));
-            ui.label(tl!("Your changes will be lost if you don't save them."));
+            // Write: a calm prompt, the question with a page beside it, the consequence in a quieter
+            // tone, and buttons of one size in matte colours.
+            let t = Tokens::get(ui.ctx());
+            ui.add_space(4.0);
+            ui.horizontal_top(|ui| {
+                let (r, _) = ui.allocate_exact_size(vec2(34.0, 34.0), Sense::hover());
+                crate::icons::paint(ui.painter(), r, "blankPage", t.icon, t.accent);
+                ui.add_space(8.0);
+                ui.vertical(|ui| {
+                    ui.label(
+                        egui::RichText::new(crate::i18n::fmt(tl!("Do you want to save changes to {name}?"), &[("name", name)]))
+                            .font(semibold(15.0))
+                            .color(t.text),
+                    );
+                    ui.add_space(2.0);
+                    ui.label(egui::RichText::new(tl!("Your changes will be lost if you don't save them.")).color(t.text_dim));
+                });
+            });
             // Why the last Save failed (#1445): the prompt came back so the user can't miss it.
             if !message.is_empty() {
                 ui.add_space(4.0);
                 ui.label(egui::RichText::new(message.as_str()).color(ui.visuals().error_fg_color));
             }
-            ui.add_space(8.0);
+            ui.add_space(14.0);
             let buttons = ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let cancel = ui.button(tl!("Cancel"));
-                    let dont_save = ui.button(tl!("Don't Save"));
-                    let save = ui.add(crate::widgets::primary_button(ui, tl!("Save")));
+                    ui.spacing_mut().item_spacing = vec2(8.0, 0.0);
+                    let size = vec2(104.0, 28.0);
+                    let cancel = ui.add(egui::Button::new(tl!("Cancel")).min_size(size));
+                    let dont_save = ui.add(egui::Button::new(tl!("Don't Save")).min_size(size));
+                    let save = ui.add(crate::widgets::primary_button(ui, tl!("Save")).min_size(size));
                     [(cancel, "cancel"), (dont_save, "dontSave"), (save, "save")]
                 })
                 .inner

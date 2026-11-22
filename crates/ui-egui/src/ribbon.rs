@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 use crate::colors::{Remember, Target};
 use crate::options::MeasureExt;
-use crate::theme::{Tokens, medium, regular, semibold};
+use crate::theme::{Tokens, medium, semibold};
 use crate::widgets::{CONTENT_H, LABEL_H, big, big_toggle, group, menu_button, small, split};
 use crate::{WordApp, icons};
 
@@ -308,17 +308,9 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
         .show(ui, |ui| {
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing = vec2(2.0, 0.0);
-                // Write: the Editing/Reviewing switch keeps its room (no Share or Comments
-                // button); the tabs get what is left of it (#897, #2026), and the switch gives up
-                // its label before a tab is drawn over it.
-                let editing_label = if app.session.doc.settings.track_changes { tl!("Reviewing") } else { tl!("Editing") };
-                let spaced = |w: f32| w + 2.0;
-                let button_widths = |level: usize| -> f32 {
-                    let labels = level == 0;
-                    let editing = crate::widgets::icon_text_button_width(ui, editing_label, regular(12.0), true, labels);
-                    // The gap after it and the strip's margin.
-                    spaced(editing) + 8.0 + 12.0
-                };
+                // Write: no buttons on the strip's right (no Share, Comments or Editing switch); the
+                // tabs get the whole strip (#897, #2026) but for its margin.
+                let button_widths = |_level: usize| -> f32 { 12.0 };
                 let button_levels = [button_widths(0), button_widths(1), button_widths(2)];
                 let labels: Vec<&str> = tabs.iter().map(|(tab, custom)| if *custom { tab.as_str() } else { tl!(tab) }).collect();
                 let specs: Vec<TabSpec> = tabs
@@ -337,22 +329,6 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                     if !app.has_document() {
                         ui.disable();
                     }
-                    let track = app.session.doc.settings.track_changes;
-                    let mode = if plan.buttons == 0 {
-                        crate::widgets::icon_text_menu_button(ui, "pencil", editing_label, regular(12.0))
-                    } else {
-                        crate::widgets::icon_only_button(ui, "pencil", editing_label, regular(12.0), true)
-                    };
-                    egui::Popup::menu(&mode).show(|ui| {
-                        if ui.selectable_label(!track, tl!(tl!("Editing — edit the document directly"))).clicked() {
-                            let _ = app.run("review.trackChanges", json!({"value": false}));
-                            ui.close();
-                        }
-                        if ui.selectable_label(track, tl!(tl!("Reviewing — edits become suggestions"))).clicked() {
-                            let _ = app.run("review.trackChanges", json!({"value": true}));
-                            ui.close();
-                        }
-                    });
                     ui.add_space(8.0);
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         // The tabs that don't fit go into a » menu at the end of the strip (#897, #2026).
@@ -3221,10 +3197,10 @@ mod tests {
             app,
         );
         h.run_steps(3);
-        let buttons = [tl!("Editing")].map(|b| h.get_by_label(b).rect());
+        // Write: no buttons on the strip's right; the tabs stay inside the window.
         for tab in ["Table Design", "Table Layout"] {
             let r = h.get_by_label(tl!(tab)).rect();
-            assert!(r.right() <= 1280.0 && buttons.iter().all(|b| !b.intersects(r)), "{tab} {r:?} under {buttons:?}");
+            assert!(r.right() <= 1280.0, "{tab} {r:?} past the window");
             h.get_by_label(tl!(tab)).click();
             h.run_steps(2);
             assert_eq!(h.state().ui.tab, tab);
@@ -3251,10 +3227,8 @@ mod tests {
                     app,
                 );
                 h.run_steps(3);
-                let buttons: Vec<Rect> = [tl!("Editing")].iter().filter_map(|b| h.query_by_label(b).map(|n| n.rect())).collect();
-                // Write: the Editing/Reviewing switch is the strip's only button.
-                assert_eq!(buttons.len(), 1, "{lang} {width}: the Editing switch is on the strip");
-                assert!(buttons.iter().all(|b| b.right() <= width + 0.5 && b.left() >= 0.0), "{lang} {width}: buttons inside {buttons:?}");
+                // Write: the strip has no buttons on its right, only tabs.
+                let buttons: Vec<Rect> = Vec::new();
                 for tab in crate::ribbon::TABS.iter().copied().chain(["Table Design", "Table Layout"]) {
                     // A group folded into a button can share the tab's name (Draw): only the node on
                     // the strip is the tab.
