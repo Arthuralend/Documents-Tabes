@@ -662,6 +662,8 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
     let maxw = l.pages.iter().map(|p| sane_dim(p.w, 1e5)).fold(0.0f32, f32::max).max(72.0) + markup;
     let maxh = l.pages.iter().map(|p| sane_dim(p.h, 20_000.0)).fold(0.0f32, f32::max).max(72.0);
     let web = v.mode != wordcraft_layout::ViewMode::Print;
+    // Write (the app sets `new_first_line_indent`).
+    let write = app.session.new_first_line_indent.is_some();
     let mut scale = v.zoom.clamp(0.1, 5.0) * PX_PER_PT;
     if v.read_mode {
         scale = v.read_zoom.clamp(0.75, 1.5) * PX_PER_PT;
@@ -672,6 +674,8 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
         return Geometry { rects, size, scale, cols: sizes.len().max(1), bands };
     }
     match v.fit.as_str() {
+        // Write: half Word's room beside the page, as when a narrow window shrinks it.
+        "pageWidth" if write => scale = ((avail.x - 2.0 * WRITE_SIDE - 10.0) / maxw).clamp(0.1, 6.0),
         "pageWidth" => scale = ((avail.x - 2.0 * GAP - 20.0) / maxw).clamp(0.1, 6.0),
         "onePage" => scale = ((avail.y - 2.0 * GAP) / maxh).min((avail.x - 2.0 * GAP) / maxw).clamp(0.05, 6.0),
         "multiplePages" => scale = ((avail.y - 2.0 * GAP) / maxh).min((avail.x - 3.0 * GAP) / (2.0 * maxw)).clamp(0.05, 6.0),
@@ -683,7 +687,6 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
     // Write (the app sets `new_first_line_indent`): a window narrower than the page at the chosen
     // zoom shrinks the page with it, so the whole width of the paper stays in view; a wider
     // window gives the chosen zoom back.
-    let write = app.session.new_first_line_indent.is_some();
     if !web && v.fit.is_empty() && write {
         // Half Word's room beside the page: to the ruler on the left, to the edge on the right.
         let fits = (avail.x - 2.0 * WRITE_SIDE - 10.0) / maxw;
@@ -6302,8 +6305,12 @@ mod narrow_window_tests {
         let narrow = super::geometry(&a, &layout, egui::vec2(500.0, 900.0));
         let page_w = narrow.rects.first().map_or(f32::MAX, |r| r.width());
         assert!(narrow.scale < wide.scale && page_w <= 500.0, "the page fits: {page_w} at {}", narrow.scale);
-        // Half Word's room on each side: about 14 points.
+        // Half Word's room on each side: about 14 points, at Page Width too.
         let left = narrow.rects.first().map_or(f32::MAX, |r| r.left());
         assert!(left <= 15.0 && narrow.size.x <= 500.0, "room beside the page: {left}, content {}", narrow.size.x);
+        a.session.view.fit = "pageWidth".into();
+        let fitted = super::geometry(&a, &layout, egui::vec2(700.0, 900.0));
+        let left = fitted.rects.first().map_or(f32::MAX, |r| r.left());
+        assert!(left <= 15.0 && fitted.size.x <= 700.0, "Page Width: room beside the page {left}, content {}", fitted.size.x);
     }
 }

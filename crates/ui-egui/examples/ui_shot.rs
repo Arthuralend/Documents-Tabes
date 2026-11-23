@@ -26,7 +26,13 @@ fn main() {
     } else {
         wordcraft_engine::sample::sample_document()
     };
-    let mut app = WordApp::new(Session::new(doc), Services::default()).with_control(rx);
+    let mut session = Session::new(doc);
+    // `{"write": true}` anywhere: the Write app's own defaults (red line, 1.5 cm right margin,
+    // the page fitted to a narrow window).
+    if lines.iter().any(|l| l.get("write").is_some()) {
+        session.new_first_line_indent = Some(wordcraft_engine::NEW_FIRST_LINE_INDENT);
+    }
+    let mut app = WordApp::new(session, Services::default()).with_control(rx);
     app.integrated_titlebar = true;
     if lines.first().is_some_and(|l| l.get("startScreen").is_some()) {
         app.start_screen();
