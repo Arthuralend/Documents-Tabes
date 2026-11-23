@@ -444,7 +444,18 @@ fn columns_for(avail_w: f32, slot_px: f32, pages: usize, min_cols: usize, auto: 
 /// Place pages (sizes in points) in rows of `cols`, left to right then top to bottom, each in a slot
 /// as wide as the widest page plus `markup` and centred in `avail_w`. Returns the screen-space rects
 /// (relative to the content's top-left) and the content size.
+#[cfg(test)]
 fn place_pages(sizes: &[(f32, f32)], markup: f32, scale: f32, cols: usize, avail: egui::Vec2) -> (Vec<Rect>, egui::Vec2) {
+    place_pages_with_side(sizes, markup, scale, cols, avail, GAP)
+}
+
+/// Write: the room left beside the page (to the vertical ruler on the left, to the window's edge
+/// on the right) when the page is fitted to a narrow window: half of Word's.
+const WRITE_SIDE: f32 = GAP / 2.0;
+
+/// [`place_pages`] with at least `side` points of room on the left and right of the row.
+fn place_pages_with_side(sizes: &[(f32, f32)], markup: f32, scale: f32, cols: usize, avail: egui::Vec2, side: f32) -> (Vec<Rect>, egui::Vec2) {
+    let side = if side.is_finite() { side.clamp(0.0, GAP) } else { GAP };
     let cols = cols.max(1);
     let scale = if scale.is_finite() { scale.clamp(0.01, 10.0) } else { PX_PER_PT };
     let markup = if markup.is_finite() { markup.clamp(0.0, 10_000.0) } else { 0.0 };
@@ -452,7 +463,7 @@ fn place_pages(sizes: &[(f32, f32)], markup: f32, scale: f32, cols: usize, avail
     let maxw = sizes.iter().map(|&(w, _)| sane_dim(w, 1e5)).fold(0.0f32, f32::max).max(72.0) + markup;
     let slot = maxw * scale;
     let row_w = cols as f32 * slot + (cols as f32 - 1.0) * GAP;
-    let content_w = (row_w + 2.0 * GAP).max(avail.x);
+    let content_w = (row_w + 2.0 * side).max(avail.x);
     let mut rects = Vec::with_capacity(sizes.len());
     let mut y = GAP;
     for row in sizes.chunks(cols) {
@@ -672,8 +683,10 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
     // Write (the app sets `new_first_line_indent`): a window narrower than the page at the chosen
     // zoom shrinks the page with it, so the whole width of the paper stays in view; a wider
     // window gives the chosen zoom back.
-    if !web && v.fit.is_empty() && app.session.new_first_line_indent.is_some() {
-        let fits = (avail.x - 2.0 * GAP - 20.0) / maxw;
+    let write = app.session.new_first_line_indent.is_some();
+    if !web && v.fit.is_empty() && write {
+        // Half Word's room beside the page: to the ruler on the left, to the edge on the right.
+        let fits = (avail.x - 2.0 * WRITE_SIDE - 10.0) / maxw;
         if fits.is_finite() && fits > 0.0 {
             scale = scale.min(fits.max(0.1));
         }
@@ -706,7 +719,8 @@ pub fn geometry(app: &WordApp, l: &DocLayout, avail: egui::Vec2) -> Geometry {
         let bands = rects.iter().map(|r| (0.0, r.height())).collect();
         return Geometry { rects, size, scale, cols: 1, bands };
     }
-    let (mut rects, mut size) = place_pages(&sizes, markup, scale, cols, avail);
+    let side = if write { WRITE_SIDE } else { GAP };
+    let (mut rects, mut size) = place_pages_with_side(&sizes, markup, scale, cols, avail, side);
     let mut bands: Vec<(f32, f32)> = rects.iter().map(|r| (0.0, r.height())).collect();
     let editing_part = matches!(app.session.sel.focus.story, StoryRef::Part(_));
     if v.hide_white_space && v.mode == wordcraft_layout::ViewMode::Print && !v.read_mode && cols == 1 && !editing_part && rects.len() > 1 {
@@ -6288,5 +6302,8 @@ mod narrow_window_tests {
         let narrow = super::geometry(&a, &layout, egui::vec2(500.0, 900.0));
         let page_w = narrow.rects.first().map_or(f32::MAX, |r| r.width());
         assert!(narrow.scale < wide.scale && page_w <= 500.0, "the page fits: {page_w} at {}", narrow.scale);
+        // Half Word's room on each side: about 14 points.
+        let left = narrow.rects.first().map_or(f32::MAX, |r| r.left());
+        assert!(left <= 15.0 && narrow.size.x <= 500.0, "room beside the page: {left}, content {}", narrow.size.x);
     }
 }
