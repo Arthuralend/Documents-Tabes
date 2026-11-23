@@ -6946,6 +6946,10 @@ mod tests {
         assert!(second.session.view.marks);
         assert!((second.session.view.zoom - 1.3).abs() < 1e-6);
         assert_eq!(second.session.view.fit, "pageWidth");
+        // As the app reads ui.json: through the lenient reader.
+        let mut third = app();
+        third.apply_prefs(UiState::from_json(&saved).unwrap());
+        assert!(!third.session.view.ruler, "read back through UiState::from_json");
         let mut old = app();
         old.apply_prefs(serde_json::from_str(r#"{"navTab": "headings"}"#).unwrap());
         assert!(old.session.view.ruler, "an old ui.json keeps the default");
