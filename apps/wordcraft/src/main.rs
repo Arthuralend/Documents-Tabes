@@ -68,6 +68,8 @@ impl eframe::App for App {
             if last.is_none_or(|t| t.elapsed() >= std::time::Duration::from_secs(2)) {
                 *last = Some(std::time::Instant::now());
                 open_windows::publish(self.0.session.path.as_deref());
+                // Settings changed in this window are written within a couple of seconds.
+                save_prefs(&self.0);
                 if open_windows::take_focus_request() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
@@ -219,6 +221,7 @@ fn load_prefs(app: &mut WordApp) {
     {
         app.apply_prefs(ui);
     }
+    note_saved_prefs(app);
 }
 
 /// Fonts the user added (#582) live in `fonts` in the settings folder: load them, and store fonts
@@ -243,9 +246,30 @@ fn saved_window() -> Option<WindowGeometry> {
     UiState::from_json(&bytes)?.window?.sanitized()
 }
 
+/// The preferences this window last wrote (or read at start). A window writes only what changed
+/// in it, so one that changed nothing doesn't put its older settings over another window's.
+static SAVED_PREFS: std::sync::Mutex<Option<Vec<u8>>> = std::sync::Mutex::new(None);
+
+/// Remember `app`'s preferences as the ones on disk (after loading them).
+fn note_saved_prefs(app: &WordApp) {
+    if let Ok(bytes) = serde_json::to_vec_pretty(&app.prefs()) {
+        *SAVED_PREFS.lock().unwrap_or_else(|e| e.into_inner()) = Some(bytes);
+    }
+}
+
+/// Write the preferences when they changed since this window last wrote or read them: soon after
+/// a change (the ruler hidden, a theme picked…), not only at quit, so they survive a crash and
+/// other windows.
 fn save_prefs(app: &WordApp) {
     if !prefs_enabled() {
         return;
+    }
+    if let Ok(bytes) = serde_json::to_vec_pretty(&app.prefs()) {
+        let mut last = SAVED_PREFS.lock().unwrap_or_else(|e| e.into_inner());
+        if last.as_deref() == Some(bytes.as_slice()) {
+            return;
+        }
+        *last = Some(bytes);
     }
     if let Some(p) = prefs_path() {
         if let Some(dir) = p.parent()

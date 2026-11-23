@@ -264,6 +264,67 @@ fn paste_target(canvas_focused: bool, backstage: bool, dialog: bool) -> bool {
     canvas_focused && !backstage && !dialog
 }
 
+/// Write: the View settings kept between runs ([`UiState::view`]). Each is optional, so a field
+/// missing from `ui.json` (or junk in it) keeps the default.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SavedView {
+    pub ruler: Option<bool>,
+    pub gridlines: Option<bool>,
+    pub table_gridlines: Option<bool>,
+    pub marks: Option<bool>,
+    pub hide_white_space: Option<bool>,
+    pub zoom: Option<f32>,
+    /// "pageWidth", "onePage", "multiplePages" or "" (a zoom of its own).
+    pub fit: Option<String>,
+    pub multi_page: Option<bool>,
+    pub single_column: Option<bool>,
+    pub read_zoom: Option<f32>,
+}
+
+impl SavedView {
+    /// What `v` shows now.
+    pub fn of(v: &wordcraft_engine::ViewState) -> SavedView {
+        SavedView {
+            ruler: Some(v.ruler),
+            gridlines: Some(v.gridlines),
+            table_gridlines: Some(v.table_gridlines),
+            marks: Some(v.marks),
+            hide_white_space: Some(v.hide_white_space),
+            zoom: Some(v.zoom),
+            fit: Some(v.fit.clone()),
+            multi_page: Some(v.multi_page),
+            single_column: Some(v.single_column),
+            read_zoom: Some(v.read_zoom),
+        }
+    }
+
+    /// Put the saved settings back on `v`; hostile numbers are clamped, unknown fits ignored.
+    pub fn apply(self, v: &mut wordcraft_engine::ViewState) {
+        let set = |dst: &mut bool, src: Option<bool>| {
+            if let Some(b) = src {
+                *dst = b;
+            }
+        };
+        set(&mut v.ruler, self.ruler);
+        set(&mut v.gridlines, self.gridlines);
+        set(&mut v.table_gridlines, self.table_gridlines);
+        set(&mut v.marks, self.marks);
+        set(&mut v.hide_white_space, self.hide_white_space);
+        set(&mut v.multi_page, self.multi_page);
+        set(&mut v.single_column, self.single_column);
+        if let Some(z) = self.zoom.filter(|z| z.is_finite()) {
+            v.zoom = z.clamp(0.1, 5.0);
+        }
+        if let Some(z) = self.read_zoom.filter(|z| z.is_finite()) {
+            v.read_zoom = z.clamp(0.75, 1.5);
+        }
+        if let Some(f) = self.fit.filter(|f| matches!(f.as_str(), "" | "pageWidth" | "onePage" | "multiplePages")) {
+            v.fit = f;
+        }
+    }
+}
+
 /// UI state that persists between runs (and that agents can read and set).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -312,6 +373,9 @@ pub struct UiState {
     /// View › Navigation Pane: open or closed as the person left it, kept between runs (#2526).
     /// The session owns it while running (see [`WordApp::prefs`]).
     pub nav_pane: bool,
+    /// Write: View settings as the person left them (ruler, gridlines, ¶ marks, zoom, Page
+    /// Width…), kept between runs. `None` (a `ui.json` from before) keeps the defaults.
+    pub view: Option<SavedView>,
     /// Lexicon: kept only so an older `ui.json` still reads; there is no community button.
     pub show_discord: bool,
     /// User name (File › Options) for comments and tracked changes; empty keeps the default.
@@ -418,6 +482,7 @@ impl Default for UiState {
             legacy_dark: None,
             nav_tab: "headings".into(),
             nav_pane: false,
+            view: None,
             // Lexicon: the community button links to Lexicon's community; off unless turned on.
             show_discord: false,
             author: String::new(),
@@ -828,6 +893,7 @@ impl WordApp {
         ui.read_aloud_skip_citations = self.session.read_aloud.skip_citations;
         ui.dark_page = self.session.view.dark_mode;
         ui.nav_pane = self.session.view.nav_pane;
+        ui.view = Some(SavedView::of(&self.session.view));
         ui.keyboard = self.session.keymap.clone();
         ui.ribbon = self.session.ribbon.clone();
         ui.ink_pens = self.session.view.draw.pens.clone();
@@ -873,6 +939,9 @@ impl WordApp {
         self.session.read_aloud.skip_citations = self.ui.read_aloud_skip_citations;
         self.session.view.dark_mode = self.ui.dark_page;
         self.session.view.nav_pane = self.ui.nav_pane;
+        if let Some(v) = self.ui.view.take() {
+            v.apply(&mut self.session.view);
+        }
         // Keys for commands this version doesn't have are dropped.
         self.session.keymap = std::mem::take(&mut self.ui.keyboard);
         let reg = self.session.registry.clone();
@@ -6858,6 +6927,31 @@ mod tests {
         let mut second = app();
         second.apply_prefs(serde_json::from_slice(&saved).unwrap());
         assert!(second.session.view.dark_mode);
+    }
+
+    /// Write: View settings (the ruler, ¶ marks, zoom, Page Width) are as the person left them at
+    /// the next launch; a `ui.json` from before keeps the defaults, and junk is ignored.
+    #[test]
+    fn view_settings_survive_restart() {
+        let mut first = app();
+        assert!(first.session.view.ruler);
+        first.run("view.ruler", json!({"value": false})).unwrap();
+        first.run("view.marks", json!({})).unwrap();
+        first.session.view.zoom = 1.3;
+        first.session.view.fit = "pageWidth".into();
+        let saved = serde_json::to_vec(&first.prefs()).unwrap();
+        let mut second = app();
+        second.apply_prefs(serde_json::from_slice(&saved).unwrap());
+        assert!(!second.session.view.ruler, "the ruler stays hidden");
+        assert!(second.session.view.marks);
+        assert!((second.session.view.zoom - 1.3).abs() < 1e-6);
+        assert_eq!(second.session.view.fit, "pageWidth");
+        let mut old = app();
+        old.apply_prefs(serde_json::from_str(r#"{"navTab": "headings"}"#).unwrap());
+        assert!(old.session.view.ruler, "an old ui.json keeps the default");
+        let mut junk = app();
+        junk.apply_prefs(serde_json::from_str(r#"{"view": {"zoom": 1e30, "fit": "huge"}}"#).unwrap());
+        assert!(junk.session.view.zoom <= 5.0 && junk.session.view.fit.is_empty());
     }
 
     /// #2526: the Navigation pane stays as the person left it at the next launch, and a
