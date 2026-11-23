@@ -42,19 +42,22 @@ pub fn plan(groups: &[GroupWidths], avail: f32) -> Vec<u8> {
 }
 
 /// Write: the order in which a tab's groups give way, first to last, by title; groups not
-/// listed give way before them, from the right. On Home, Find/Replace/Select folds first, then
+/// listed give way before them, from the right. Only Home's groups give way. On Home, Find/Replace/Select folds first, then
 /// Dictate and Styles, then Paragraph down to its lists and alignments; the Clipboard and Font
 /// never fold (the owner's design keeps them whole in a half-screen window): what doesn't fit
 /// then scrolls.
 fn shrink_order(tab: &str, groups: &[GroupWidths]) -> Vec<usize> {
     const HOME: [&str; 4] = ["Editing", "Voice", "Styles", "Paragraph"];
     const KEEP: [&str; 2] = ["Clipboard", "Font"];
-    let mut order: Vec<usize> = (0..groups.len()).rev().collect();
-    if tab == "Home" {
-        order.retain(|i| groups.get(*i).is_none_or(|g| !KEEP.contains(&g.title.as_str())));
-        let rank = |i: &usize| groups.get(*i).and_then(|g| HOME.iter().position(|t| *t == g.title)).unwrap_or(0);
-        order.sort_by_key(rank);
+    // Write: the other tabs keep every group whole and scroll (‹ ›) when the window is narrow,
+    // instead of folding groups into "•••" buttons.
+    if tab != "Home" {
+        return Vec::new();
     }
+    let mut order: Vec<usize> = (0..groups.len()).rev().collect();
+    order.retain(|i| groups.get(*i).is_none_or(|g| !KEEP.contains(&g.title.as_str())));
+    let rank = |i: &usize| groups.get(*i).and_then(|g| HOME.iter().position(|t| *t == g.title)).unwrap_or(0);
+    order.sort_by_key(rank);
     order
 }
 
