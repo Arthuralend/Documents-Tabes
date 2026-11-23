@@ -282,7 +282,8 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
     // contextual ones (the Outlining tab right after File). A contextual tab (Table, Picture
     // Format) may be stored while the selection moved away, and a tab may have been hidden.
     let user_tabs = app.session.ribbon.tabs().into_owned();
-    let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
+    // Write on the Mac: File is in the menu bar beside the Apple menu, not a ribbon tab.
+    let mut tabs: Vec<(String, bool)> = if cfg!(target_os = "macos") { Vec::new() } else { vec![("File".to_string(), false)] };
     // Write: no Developer, Zotero, Help, References, Mailings or Review tab (reviewing is the
     // Editing/Reviewing switch at the top right; spelling is F7).
     tabs.extend(user_tabs.iter().filter(|e| !e.hidden && (e.custom || !HIDDEN_TABS.contains(&e.name.as_str()))).map(|e| (e.name.clone(), e.custom)));

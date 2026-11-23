@@ -19,6 +19,8 @@ mod file_dialogs;
 #[cfg(any(target_os = "windows", target_os = "macos", test))]
 mod graphics;
 mod logging;
+#[cfg(target_os = "macos")]
+mod native_menu;
 mod open_windows;
 mod print;
 mod region;
@@ -40,12 +42,22 @@ struct App(
     Option<control_server::KeyFile>,
     file_dialogs::Launcher,
     #[cfg(target_os = "macos")] fmv_macos_events::Inbox,
+    #[cfg(target_os = "macos")] Option<native_menu::NativeMenu>,
 );
 
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         #[cfg(target_os = "macos")]
-        apple_events::poll(&self.4, &mut self.0, ctx);
+        {
+            apple_events::poll(&self.4, &mut self.0, ctx);
+            // The menu bar beside the Apple menu: Write, File, Window.
+            if self.5.is_none() {
+                self.5 = Some(native_menu::NativeMenu::install(ctx));
+            }
+            if let Some(menu) = &mut self.5 {
+                menu.poll(&mut self.0);
+            }
+        }
         self.0.logic(ctx);
         // Write: say which file this window has, and come forward when another window
         // was asked to open it (`open_windows`).
@@ -560,6 +572,8 @@ fn main() -> eframe::Result {
                 dialogs,
                 #[cfg(target_os = "macos")]
                 apple_events.connect(&cc.egui_ctx),
+                #[cfg(target_os = "macos")]
+                None,
             )))
         }),
     )
