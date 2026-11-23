@@ -2683,7 +2683,19 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                     ui.label(egui::RichText::new(tl!("Write")).font(semibold(22.0)));
                     // The suite's name, a brand: the same in every language.
                     ui.label(egui::RichText::new(SUITE_NAME).weak());
-                    let build = option_env!("WORDCRAFT_BUILD_SHA").map(|s| s.get(..8).unwrap_or(s)).unwrap_or(tl!("development build"));
+                    // Write: the build's code and date beside the version, so one release can be told
+                    // from the next (the version number stays the same between them).
+                    let sha = option_env!("WORDCRAFT_BUILD_SHA").filter(|s| !s.is_empty() && *s != "unknown").map(|s| s.get(..7).unwrap_or(s));
+                    let date = option_env!("WORDCRAFT_BUILD_DATE").and_then(|d| {
+                        let mut p = d.splitn(3, '-');
+                        Some(format!("{2}.{1}.{0}", p.next()?, p.next()?, p.next()?))
+                    });
+                    let build = match (sha, date) {
+                        (Some(s), Some(d)) => format!("{s}, {d}"),
+                        (Some(s), None) => s.to_string(),
+                        _ => tl!("development build").to_string(),
+                    };
+                    let build = build.as_str();
                     ui.label(crate::i18n::fmt(tl!("Version {version} ({build})"), &[("version", env!("CARGO_PKG_VERSION")), ("build", build)]));
                     ui.label(tl!("A free, open-source word processor with spelling in Russian, English, Armenian, Georgian and Azerbaijani."));
                     ui.add_space(6.0);
