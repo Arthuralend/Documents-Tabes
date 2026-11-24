@@ -1,6 +1,6 @@
 # Builds Write (FS Office Write) for the Mac App Store and uploads it to App Store Connect, and
-# fills in its App Store listing (names, descriptions, keywords, categories, age rating, review
-# contact) from packaging/macos/appstore/metadata and rating.json.
+# fills in its App Store listing (names, descriptions, keywords, categories, age rating and
+# screenshots) from packaging/macos/appstore/metadata, rating.json and screenshots/.
 # Run by hand: Actions › "App Store (Write for Mac)" › Run workflow. Only Write; Table isn't part
 # of it. See docs/appstore/README.md for the certificates, profile and API key this needs; the
 # listing needs only the API key.
@@ -76,7 +76,8 @@ jobs:
           fastlane deliver --api_key_path "$KEY" --platform osx \
             --app_identifier "$BUNDLE_ID" --app_version "$VERSION" \
             --metadata_path metadata --app_rating_config_path rating.json \
-            --skip_binary_upload true --skip_screenshots true \
+            --skip_binary_upload true \
+            --screenshots_path screenshots --overwrite_screenshots true \
             --submit_for_review false --run_precheck_before_submit false --force true
           rm -f "$KEY"
 
