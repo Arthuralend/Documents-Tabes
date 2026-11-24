@@ -89,10 +89,26 @@ printf 'APPL????' >"$APP/Contents/PkgInfo"
 cp "$APPSTORE_PROFILE" "$APP/Contents/embedded.provisionprofile"
 
 # ---- sign and package --------------------------------------------------------------------------
+# The signature carries the application and team identifiers from the provisioning profile:
+# without them App Store Connect accepts the build but TestFlight refuses it (ITMS-90886).
+PROFILE_PLIST="$WORK/profile.plist"
+security cms -D -i "$APPSTORE_PROFILE" >"$PROFILE_PLIST"
+APP_IDENTIFIER="$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.application-identifier" "$PROFILE_PLIST")"
+TEAM_ID="$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" "$PROFILE_PLIST")"
+[ "$APP_IDENTIFIER" = "$TEAM_ID.$BUNDLE_ID" ] || {
+  echo "error: the provisioning profile is for $APP_IDENTIFIER, not $TEAM_ID.$BUNDLE_ID" >&2
+  exit 1
+}
+ENTITLEMENTS="$WORK/entitlements.plist"
+cp "$HERE/appstore/entitlements.plist" "$ENTITLEMENTS"
+/usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $APP_IDENTIFIER" "$ENTITLEMENTS"
+/usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$ENTITLEMENTS"
+plutil -lint "$ENTITLEMENTS"
+
 xattr -cr "$APP"
-codesign --force --timestamp --options runtime --entitlements "$HERE/appstore/entitlements.plist" \
+codesign --force --timestamp --options runtime --entitlements "$ENTITLEMENTS" \
   --sign "$APPSTORE_APP_IDENTITY" "$APP/Contents/MacOS/Write"
-codesign --force --timestamp --options runtime --entitlements "$HERE/appstore/entitlements.plist" \
+codesign --force --timestamp --options runtime --entitlements "$ENTITLEMENTS" \
   --sign "$APPSTORE_APP_IDENTITY" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
 codesign -d --entitlements :- "$APP"
