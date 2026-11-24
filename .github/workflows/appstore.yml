@@ -112,8 +112,13 @@ jobs:
           security set-keychain-settings -lut 21600 "$KC"
           security unlock-keychain -p "$KC_PASS" "$KC"
           for cert in APP_CERT INSTALLER_CERT; do
-            printf '%s' "${!cert}" | base64 --decode > "$RUNNER_TEMP/$cert.p12"
-            security import "$RUNNER_TEMP/$cert.p12" -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security -f pkcs12 -k "$KC"
+            # Spaces and line breaks from copying are dropped; anything else that isn't base64
+            # names the secret to paste again.
+            printf '%s' "${!cert}" | tr -d ' \r\n\t' | base64 --decode > "$RUNNER_TEMP/$cert.p12" 2>/dev/null \
+              || { echo "::error::secret for $cert is not base64 of a .p12 file: copy it again with base64 -i <file> | pbcopy"; exit 1; }
+            [ -s "$RUNNER_TEMP/$cert.p12" ] || { echo "::error::secret for $cert decodes to nothing"; exit 1; }
+            security import "$RUNNER_TEMP/$cert.p12" -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security -f pkcs12 -k "$KC" \
+              || { echo "::error::$cert could not be opened: is APPSTORE_CERT_PASSWORD the password it was exported with?"; exit 1; }
             rm -f "$RUNNER_TEMP/$cert.p12"
           done
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" "$KC" >/dev/null
@@ -122,7 +127,8 @@ jobs:
           INSTALLER="$(security find-identity -v "$KC" | grep -E 'Installer' | head -1 | sed -E 's/^ *[0-9]+\) [0-9A-F]+ "(.*)"$/\1/')"
           [ -n "$APP_ID" ] || { echo "::error::no Apple Distribution identity in APPSTORE_APP_CERT_P12"; exit 1; }
           [ -n "$INSTALLER" ] || { echo "::error::no Mac Installer Distribution identity in APPSTORE_INSTALLER_CERT_P12"; exit 1; }
-          printf '%s' "$PROFILE" | base64 --decode > "$RUNNER_TEMP/write.provisionprofile"
+          printf '%s' "$PROFILE" | tr -d ' \r\n\t' | base64 --decode > "$RUNNER_TEMP/write.provisionprofile" 2>/dev/null \
+            || { echo "::error::secret APPSTORE_PROFILE is not base64 of the .provisionprofile: copy it again with base64 -i <file> | pbcopy"; exit 1; }
           if [ -n "$API_KEY_ID" ] && [ -n "$API_KEY_P8" ]; then
             mkdir -p "$HOME/.appstoreconnect/private_keys"
             printf '%s\n' "$API_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
