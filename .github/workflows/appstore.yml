@@ -132,10 +132,14 @@ jobs:
           # Names stay out of the log (it's public); only what was found is said.
           IDS="$(security find-identity -v "$KC" || true)"
           APP_ID="$(printf '%s\n' "$IDS" | grep -E '"(Apple Distribution|3rd Party Mac Developer Application)' | head -1 | awk '{print $2}' || true)"
-          INSTALLER="$(printf '%s\n' "$IDS" | grep -E 'Installer' | head -1 | sed -E 's/^ *[0-9]+\) [0-9A-F]+ "(.*)"$/\1/' || true)"
+          # An installer identity isn't always listed as "valid" (-v), so look at all of them.
+          ALL="$(security find-identity "$KC" || true)"
+          INSTALLER="$(printf '%s\n' "$ALL" | grep -E '"(3rd Party Mac Developer Installer|Mac Installer Distribution)' | head -1 | sed -E 's/^ *[0-9]+\) [0-9A-F]+ "(.*)"( \(.*\))?$/\1/' || true)"
           echo "valid signing identities: $(printf '%s\n' "$IDS" | grep -cE '^ *[0-9]+\)' || true)"
+          echo "identities with a key: distribution $(printf '%s\n' "$ALL" | grep -c '"Apple Distribution' || true), installer $(printf '%s\n' "$ALL" | grep -cE '"(3rd Party Mac Developer Installer|Mac Installer Distribution)' || true)"
+          echo "installer certificates without a key check: $(security find-certificate -a "$KC" | grep -cE '"labl"<blob>="(3rd Party Mac Developer Installer|Mac Installer Distribution)' || true)"
           [ -n "$APP_ID" ] || { echo "::error::no valid Apple Distribution identity in APPSTORE_APP_CERT_P12 (export it with its key, from My Certificates, as .p12)"; exit 1; }
-          [ -n "$INSTALLER" ] || { echo "::error::no valid Mac Installer Distribution identity in APPSTORE_INSTALLER_CERT_P12 (export it with its key, from My Certificates, as .p12)"; exit 1; }
+          [ -n "$INSTALLER" ] || { echo "::error::no Mac Installer Distribution identity in APPSTORE_INSTALLER_CERT_P12: export "3rd Party Mac Developer Installer" (not Apple Distribution) with its key, from My Certificates, as .p12"; exit 1; }
           printf '%s' "$PROFILE" | tr -d ' \r\n\t' | base64 --decode > "$RUNNER_TEMP/write.provisionprofile" 2>/dev/null \
             || { echo "::error::secret APPSTORE_PROFILE is not base64 of the .provisionprofile: copy it again with base64 -i <file> | pbcopy"; exit 1; }
           if [ -n "$API_KEY_ID" ] && [ -n "$API_KEY_P8" ]; then
