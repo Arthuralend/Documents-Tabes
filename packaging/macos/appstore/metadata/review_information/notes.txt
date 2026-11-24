@@ -1,1 +1,0 @@
-Write is a word processor. No account or sign-in is needed. Dictation (Home > Dictate) asks for microphone and speech recognition access and uses Apple's speech recognition; everything else works offline.
