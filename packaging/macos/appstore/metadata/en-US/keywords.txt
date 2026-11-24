@@ -1,0 +1,1 @@
+processor,writer,docx,pdf,dictation,spelling,document,text,editor,office,notes

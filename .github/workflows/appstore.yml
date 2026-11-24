@@ -1,6 +1,9 @@
-# Builds Write (FS Office Write) for the Mac App Store and uploads it to App Store Connect.
+# Builds Write (FS Office Write) for the Mac App Store and uploads it to App Store Connect, and
+# fills in its App Store listing (names, descriptions, keywords, categories, age rating, review
+# contact) from packaging/macos/appstore/metadata and rating.json.
 # Run by hand: Actions › "App Store (Write for Mac)" › Run workflow. Only Write; Table isn't part
-# of it. See docs/appstore/README.md for the certificates, profile and API key this needs.
+# of it. See docs/appstore/README.md for the certificates, profile and API key this needs; the
+# listing needs only the API key.
 #
 # Secrets (Settings › Secrets and variables › Actions):
 #   APPSTORE_APP_CERT_P12        base64 of the "Apple Distribution" certificate exported as .p12
@@ -19,8 +22,20 @@ on:
         description: "Bundle ID registered for Write"
         default: "com.fantasticsoftware.write"
         required: true
+      version:
+        description: "Version shown in the App Store (the version being prepared in App Store Connect)"
+        default: "1.0"
+        required: true
+      listing:
+        description: "Fill in the App Store listing from the repository"
+        type: boolean
+        default: true
+      build:
+        description: "Build Write"
+        type: boolean
+        default: true
       upload:
-        description: "Upload to App Store Connect (otherwise only build the .pkg)"
+        description: "Upload the build to App Store Connect (otherwise only keep the .pkg)"
         type: boolean
         default: true
 
@@ -28,7 +43,44 @@ permissions:
   contents: read
 
 jobs:
+  listing:
+    if: ${{ inputs.listing }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: fastlane
+        run: gem install fastlane --no-document
+      - name: Upload the listing
+        env:
+          API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPSTORE_API_ISSUER }}
+          API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+          VERSION: ${{ inputs.version }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          FASTLANE_HIDE_CHANGELOG: "1"
+        run: |
+          set -euo pipefail
+          for v in API_KEY_ID API_ISSUER API_KEY_P8; do
+            [ -n "${!v}" ] || { echo "::error::secret for $v is missing (see docs/appstore/README.md)"; exit 1; }
+          done
+          KEY="$RUNNER_TEMP/asc-key.json"
+          jq -n --arg id "$API_KEY_ID" --arg iss "$API_ISSUER" --arg key "$API_KEY_P8" \
+            '{key_id: $id, issuer_id: $iss, key: $key, in_house: false}' > "$KEY"
+          M=packaging/macos/appstore
+          fastlane deliver --api_key_path "$KEY" --platform osx \
+            --app_identifier "$BUNDLE_ID" --app_version "$VERSION" \
+            --metadata_path "$M/metadata" --app_rating_config_path "$M/rating.json" \
+            --skip_binary_upload true --skip_screenshots true \
+            --submit_for_review false --run_precheck_before_submit false --force true
+          rm -f "$KEY"
+
   appstore:
+    if: ${{ inputs.build }}
     runs-on: macos-latest
     timeout-minutes: 150
     steps:
@@ -82,6 +134,7 @@ jobs:
       - name: Build, sign and package Write
         env:
           APPSTORE_BUNDLE_ID: ${{ inputs.bundle_id }}
+          APPSTORE_VERSION: ${{ inputs.version }}
           APPSTORE_BUILD_NUMBER: ${{ github.run_number }}
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_API_ISSUER: ${{ secrets.APPSTORE_API_ISSUER }}

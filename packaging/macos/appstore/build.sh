@@ -12,6 +12,7 @@
 #   APPSTORE_INSTALLER_IDENTITY "3rd Party Mac Developer Installer: <name> (<TEAMID>)"
 #                             (Xcode calls it "Mac Installer Distribution")
 #   APPSTORE_PROFILE          path to the .provisionprofile (Mac App Store distribution)
+#   APPSTORE_VERSION          the version shown in the App Store (default: the release version)
 # --upload also needs an App Store Connect API key:
 #   APPSTORE_API_KEY_ID, APPSTORE_API_ISSUER (the key's .p8 in ~/.appstoreconnect/private_keys/)
 #
@@ -41,7 +42,8 @@ BUNDLE_ID="${APPSTORE_BUNDLE_ID:-com.fantasticsoftware.write}"
 
 # Keep in sync with LSMinimumSystemVersion in Info.plist.in.
 export MACOSX_DEPLOYMENT_TARGET=11.0
-SHORT_VERSION="${VERSION%%-*}"
+# The version the App Store shows (APPSTORE_VERSION, e.g. 1.0); the release version otherwise.
+SHORT_VERSION="${APPSTORE_VERSION:-${VERSION%%-*}}"
 # The App Store wants a build number that grows with every upload of the same version.
 BUILD_NUMBER="${APPSTORE_BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}"
 WORK="$CARGO_TARGET_DIR/appstore-package"
@@ -49,7 +51,7 @@ APP="$WORK/Write.app"
 PKG="$DIST/FS-Office-Write-$VERSION-appstore.pkg"
 TARGETS=(aarch64-apple-darwin x86_64-apple-darwin)
 
-echo "==> FS Office Write $VERSION ($BUILD_NUMBER) for the Mac App Store, bundle id $BUNDLE_ID"
+echo "==> FS Office Write $SHORT_VERSION ($BUILD_NUMBER) for the Mac App Store, bundle id $BUNDLE_ID"
 
 # ---- build -------------------------------------------------------------------------------------
 if [ "$SKIP_BUILD" = 0 ]; then
