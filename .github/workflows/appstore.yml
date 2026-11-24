@@ -71,10 +71,11 @@ jobs:
           KEY="$RUNNER_TEMP/asc-key.json"
           jq -n --arg id "$API_KEY_ID" --arg iss "$API_ISSUER" --arg key "$API_KEY_P8" \
             '{key_id: $id, issuer_id: $iss, key: $key, in_house: false}' > "$KEY"
-          M=packaging/macos/appstore
+          # From the folder that holds metadata/, so deliver doesn't offer to set itself up.
+          cd packaging/macos/appstore
           fastlane deliver --api_key_path "$KEY" --platform osx \
             --app_identifier "$BUNDLE_ID" --app_version "$VERSION" \
-            --metadata_path "$M/metadata" --app_rating_config_path "$M/rating.json" \
+            --metadata_path metadata --app_rating_config_path rating.json \
             --skip_binary_upload true --skip_screenshots true \
             --submit_for_review false --run_precheck_before_submit false --force true
           rm -f "$KEY"
