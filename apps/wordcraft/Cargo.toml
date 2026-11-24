@@ -19,6 +19,7 @@ wordcraft-fonts = { workspace = true }
 wordcraft-ui-egui = { workspace = true }
 # Home › Dictate with the system's speech tools.
 lexicon-dictation = { path = "../../crates/dictation" }
+lexicon-sandbox = { path = "../../crates/sandbox" }
 # The control key file's location (shared with the MCP bridge).
 wordcraft-control-key = { workspace = true }
 eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11", "links"] }

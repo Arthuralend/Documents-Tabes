@@ -12,6 +12,7 @@
 mod animations;
 #[cfg(target_os = "macos")]
 mod apple_events;
+mod bookmarks;
 mod clipboard;
 mod control_server;
 mod default_apps;
@@ -59,6 +60,18 @@ impl eframe::App for App {
             }
         }
         self.0.logic(ctx);
+        // Write: a document just opened or saved stays reachable in the App Store's sandbox.
+        {
+            use std::sync::Mutex;
+            static SEEN: Mutex<Option<std::path::PathBuf>> = Mutex::new(None);
+            let mut seen = SEEN.lock().unwrap_or_else(|e| e.into_inner());
+            if self.0.session.path != *seen {
+                seen.clone_from(&self.0.session.path);
+                if let Some(p) = seen.as_deref() {
+                    bookmarks::remember(&p.to_string_lossy());
+                }
+            }
+        }
         // Write: say which file this window has, and come forward when another window
         // was asked to open it (`open_windows`).
         {
@@ -348,6 +361,8 @@ fn services(file_dialog: file_dialogs::Hook, ctx: &egui::Context) -> Services {
             let exe = std::env::current_exe().map_err(|e| e.to_string())?;
             let mut cmd = std::process::Command::new(exe);
             if let Some(p) = path {
+                // The new window (another process) regains access to it through the bookmark.
+                bookmarks::remember(p);
                 cmd.arg(p);
             }
             cmd.spawn().map(|_| ()).map_err(|e| format!("couldn't open a new window: {e}"))
@@ -429,6 +444,8 @@ fn main() -> eframe::Result {
     // First, so the panic hook and every start-up warning are recorded (`logging`).
     let logger = logging::install();
     logging::install_panic_hook();
+    // Write in the App Store's sandbox: access to the documents chosen before, before any opens.
+    bookmarks::restore_all();
     let mut control_port: Option<u16> = std::env::var("WORDCRAFT_CONTROL_PORT").ok().and_then(|p| p.parse().ok());
     let mut files = Vec::new();
     let mut sample = false;

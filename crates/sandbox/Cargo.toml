@@ -1,0 +1,15 @@
+[package]
+name = "lexicon-sandbox"
+description = "Write: security-scoped bookmarks, so the Mac App Store's sandbox lets Write reopen the documents the user chose (recent documents, a document opened in a new window)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# Not `[lints] workspace = true`: resolving a bookmark and starting access to it are unsafe
+# Objective-C calls in objc2-foundation, which the workspace forbids. The unsafe stays in `mac.rs`,
+# each call commented; everything else is safe.
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSURL", "NSData", "NSError", "NSArray"] }

@@ -2346,6 +2346,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lexicon-sandbox"
+version = "0.8.0"
+dependencies = [
+ "objc2 0.6.5",
+ "objc2-foundation 0.3.2",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.190"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5335,6 +5343,7 @@ dependencies = [
  "fmv-macos-events",
  "getrandom 0.3.4",
  "lexicon-dictation",
+ "lexicon-sandbox",
  "log",
  "muda",
  "objc2 0.6.5",

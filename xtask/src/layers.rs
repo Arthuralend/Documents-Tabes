@@ -57,6 +57,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("lexicon-android", Class::Exempt),
     // OS speech bindings (unsafe Objective-C / Win32 calls), used by the desktop app only.
     ("lexicon-dictation", Class::Exempt),
+    ("lexicon-sandbox", Class::Exempt),
     ("xtask", Class::Exempt),
 ];
 

@@ -5,7 +5,9 @@
 //! folder), an existing destination is never written in place: it is left exactly as it was and
 //! the error says to use Save As to another folder or to give Lexicon access to this one. Only
 //! a destination that doesn't exist yet, so has no previous version to lose, is created directly;
-//! a failed direct write removes it again.
+//! a failed direct write removes it again. The one exception is the Mac App Store's sandbox, where
+//! no file beside the document may ever be made: there the document is written in place and its
+//! previous bytes put back if that fails ([`overwrite_in_place`]).
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -54,6 +56,10 @@ fn create_directly(path: &Path, refused: io::Error, prepare: impl FnOnce(&mut Fi
     // `create_new` never opens an existing file or follows a link, so it can't touch one.
     let mut file = match OpenOptions::new().write(true).create_new(true).open(path) {
         Ok(file) => file,
+        // Write in the Mac App Store's sandbox: the app may write only the document the user chose,
+        // never a file beside it, so the safe replace can't work there. The document is written in
+        // place instead, its previous bytes kept to put back if the write fails.
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists && sandboxed() => return overwrite_in_place(path, prepare),
         Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
             return Err(guided(
                 refused,
@@ -70,6 +76,31 @@ fn create_directly(path: &Path, refused: io::Error, prepare: impl FnOnce(&mut Fi
     match fs::remove_file(path) {
         Ok(()) => Err(failed),
         Err(e) => Err(io::Error::new(failed.kind(), format!("{failed}; removing the incomplete new file also failed ({e})"))),
+    }
+}
+
+/// Whether this process runs in the macOS App Sandbox (the Mac App Store build): macOS sets
+/// `APP_SANDBOX_CONTAINER_ID` for every sandboxed app.
+fn sandboxed() -> bool {
+    cfg!(target_os = "macos") && std::env::var_os("APP_SANDBOX_CONTAINER_ID").is_some()
+}
+
+/// Write `path` in place (no sibling temporary file can exist): its previous bytes are read
+/// first and written back if `prepare` fails, so a failed save leaves the document as it was.
+fn overwrite_in_place(path: &Path, prepare: impl FnOnce(&mut File) -> io::Result<()>) -> io::Result<()> {
+    let previous = fs::read(path)?;
+    let mut file = OpenOptions::new().write(true).truncate(true).open(path)?;
+    let Err(failed) = prepare(&mut file) else {
+        return Ok(());
+    };
+    drop(file);
+    let restored = OpenOptions::new().write(true).truncate(true).open(path).and_then(|mut f| {
+        f.write_all(&previous)?;
+        f.sync_all()
+    });
+    match restored {
+        Ok(()) => Err(failed),
+        Err(e) => Err(io::Error::new(failed.kind(), format!("{failed}; putting the previous version back also failed ({e})"))),
     }
 }
 
@@ -255,6 +286,24 @@ mod tests {
         let out = f();
         fs::set_permissions(dir, fs::Permissions::from_mode(0o755)).unwrap();
         probe.is_err().then_some(out)
+    }
+
+    /// Write in the App Store's sandbox: a document written in place has its new bytes, and a
+    /// failed write puts the previous version back byte for byte.
+    #[test]
+    fn in_place_writes_keep_the_previous_version_when_they_fail() {
+        let d = Scratch::new();
+        let path = d.target();
+        fs::write(&path, b"Original bytes, longer than the new ones.").unwrap();
+        overwrite_in_place(&path, |f| f.write_all(b"New bytes.")).unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"New bytes.");
+        let failed = overwrite_in_place(&path, |f| {
+            f.write_all(b"Part")?;
+            Err(io::Error::other("injected failure"))
+        });
+        assert!(failed.is_err());
+        assert_eq!(fs::read(&path).unwrap(), b"New bytes.", "the previous version is back");
+        assert!(!sandboxed() || cfg!(target_os = "macos"));
     }
 
     /// #2138 review: where no sibling temporary file may be created (macOS privacy protection,

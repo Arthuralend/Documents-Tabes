@@ -1,0 +1,98 @@
+# Builds Write (FS Office Write) for the Mac App Store and uploads it to App Store Connect.
+# Run by hand: Actions › "App Store (Write for Mac)" › Run workflow. Only Write; Table isn't part
+# of it. See docs/appstore/README.md for the certificates, profile and API key this needs.
+#
+# Secrets (Settings › Secrets and variables › Actions):
+#   APPSTORE_APP_CERT_P12        base64 of the "Apple Distribution" certificate exported as .p12
+#   APPSTORE_INSTALLER_CERT_P12  base64 of the "Mac Installer Distribution" certificate as .p12
+#   APPSTORE_CERT_PASSWORD       the password both .p12 files were exported with
+#   APPSTORE_PROFILE             base64 of the "Mac App Store Connect" provisioning profile
+#   APPSTORE_API_KEY_ID          App Store Connect API key: Key ID
+#   APPSTORE_API_ISSUER          App Store Connect API key: Issuer ID
+#   APPSTORE_API_KEY_P8          App Store Connect API key: the AuthKey_….p8 file's text
+name: App Store (Write for Mac)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: "Bundle ID registered for Write"
+        default: "com.fantasticsoftware.write"
+        required: true
+      upload:
+        description: "Upload to App Store Connect (otherwise only build the .pkg)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  appstore:
+    runs-on: macos-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: appstore-universal
+      - name: Certificates, profile and API key
+        env:
+          APP_CERT: ${{ secrets.APPSTORE_APP_CERT_P12 }}
+          INSTALLER_CERT: ${{ secrets.APPSTORE_INSTALLER_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.APPSTORE_CERT_PASSWORD }}
+          PROFILE: ${{ secrets.APPSTORE_PROFILE }}
+          API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          for v in APP_CERT INSTALLER_CERT PROFILE; do
+            [ -n "${!v}" ] || { echo "::error::secret for $v is missing (see docs/appstore/README.md)"; exit 1; }
+          done
+          KC="$RUNNER_TEMP/appstore.keychain-db"
+          KC_PASS="$(openssl rand -hex 24)"
+          security create-keychain -p "$KC_PASS" "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p "$KC_PASS" "$KC"
+          for cert in APP_CERT INSTALLER_CERT; do
+            printf '%s' "${!cert}" | base64 --decode > "$RUNNER_TEMP/$cert.p12"
+            security import "$RUNNER_TEMP/$cert.p12" -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security -f pkcs12 -k "$KC"
+            rm -f "$RUNNER_TEMP/$cert.p12"
+          done
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          APP_ID="$(security find-identity -v -p codesigning "$KC" | grep 'Apple Distribution' | head -1 | awk '{print $2}')"
+          INSTALLER="$(security find-identity -v "$KC" | grep -E 'Installer' | head -1 | sed -E 's/^ *[0-9]+\) [0-9A-F]+ "(.*)"$/\1/')"
+          [ -n "$APP_ID" ] || { echo "::error::no Apple Distribution identity in APPSTORE_APP_CERT_P12"; exit 1; }
+          [ -n "$INSTALLER" ] || { echo "::error::no Mac Installer Distribution identity in APPSTORE_INSTALLER_CERT_P12"; exit 1; }
+          printf '%s' "$PROFILE" | base64 --decode > "$RUNNER_TEMP/write.provisionprofile"
+          if [ -n "$API_KEY_ID" ] && [ -n "$API_KEY_P8" ]; then
+            mkdir -p "$HOME/.appstoreconnect/private_keys"
+            printf '%s\n' "$API_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+          fi
+          {
+            echo "APPSTORE_APP_IDENTITY=$APP_ID"
+            echo "APPSTORE_INSTALLER_IDENTITY=$INSTALLER"
+            echo "APPSTORE_PROFILE=$RUNNER_TEMP/write.provisionprofile"
+          } >> "$GITHUB_ENV"
+      - name: Build, sign and package Write
+        env:
+          APPSTORE_BUNDLE_ID: ${{ inputs.bundle_id }}
+          APPSTORE_BUILD_NUMBER: ${{ github.run_number }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_ISSUER: ${{ secrets.APPSTORE_API_ISSUER }}
+          DIST: ${{ github.workspace }}/out
+        run: |
+          if [ "${{ inputs.upload }}" = "true" ]; then
+            bash packaging/macos/appstore/build.sh --upload
+          else
+            bash packaging/macos/appstore/build.sh
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: write-appstore-pkg
+          path: out/*.pkg

@@ -68,41 +68,52 @@
 2880×1800: документ на главной вкладке, диктовка со «шлейфом» новых слов, проверка орфографии на
 русском и английском, два окна рядом, сохранение в PDF.
 
-## 4. Сборка и отправка (на Mac)
+## 4. Сборка и отправка — на GitHub, без своего Mac
 
-```bash
-export APPSTORE_BUNDLE_ID=com.fantasticsoftware.write
-export APPSTORE_APP_IDENTITY="Apple Distribution: <Имя> (<TEAMID>)"
-export APPSTORE_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Имя> (<TEAMID>)"
-export APPSTORE_PROFILE=~/Downloads/FS_Office_Write_Mac_App_Store.provisionprofile
-packaging/macos/appstore/build.sh
-```
+Сборку для App Store делает GitHub (workflow [`.github/workflows/appstore.yml`](../../.github/workflows/appstore.yml)):
+он собирает только Write, подписывает его, упаковывает в `.pkg` и отправляет в App Store Connect.
 
-Готовый `dist/release/FS-Office-Write-<версия>-appstore.pkg` отправьте приложением
-**Transporter** (бесплатно в Mac App Store) или сразу из скрипта с ключом App Store Connect API
-(`APPSTORE_API_KEY_ID`, `APPSTORE_API_ISSUER`, файл `.p8` в `~/.appstoreconnect/private_keys/`) и
-флагом `--upload`. Через 10–30 минут сборка появится в App Store Connect → TestFlight; выберите её
-в версии и нажмите **Отправить на проверку**.
+1. **Экспорт сертификатов.** В «Связке ключей» на Mac найдите «Apple Distribution: …» → правый
+   клик → «Экспортировать…» → `.p12`, задайте пароль. Так же экспортируйте
+   «3rd Party Mac Developer Installer: …» (или «Mac Installer Distribution: …») с тем же паролем.
+2. **Ключ App Store Connect API.** App Store Connect → «Пользователи и доступ» → «Интеграции» →
+   «App Store Connect API» → «+», роль **App Manager**. Скачайте `AuthKey_XXXX.p8` (скачать можно
+   только один раз), запишите **Key ID** и **Issuer ID**.
+3. **Секреты GitHub**: <https://github.com/Arthuralend/Documents-Tabes/settings/secrets/actions> →
+   «New repository secret». Base64 файла: в Терминале `base64 -i файл | pbcopy`, затем вставить.
 
-## 5. Что нужно доработать в коде до отправки
+   | Секрет | Значение |
+   |---|---|
+   | `APPSTORE_APP_CERT_P12` | base64 `.p12` Apple Distribution |
+   | `APPSTORE_INSTALLER_CERT_P12` | base64 `.p12` Mac Installer Distribution |
+   | `APPSTORE_CERT_PASSWORD` | пароль от обоих `.p12` |
+   | `APPSTORE_PROFILE` | base64 файла `.provisionprofile` |
+   | `APPSTORE_API_KEY_ID` | Key ID |
+   | `APPSTORE_API_ISSUER` | Issuer ID |
+   | `APPSTORE_API_KEY_P8` | текст файла `AuthKey_XXXX.p8` целиком |
 
-В App Store приложение работает в **песочнице**: оно видит только те файлы, которые пользователь
-выбрал сам. Обычная версия (DMG с GitHub) песочницы не имеет, поэтому эти места пока рассчитаны на
-полный доступ к диску:
+4. **Запуск**: GitHub → Actions → «App Store (Write for Mac)» → «Run workflow» (Bundle ID —
+   `com.fantasticsoftware.write`, если вы зарегистрировали его). Через 30–40 минут сборка
+   появится в App Store Connect (раздел TestFlight), ещё через 10–30 минут — пройдёт обработку.
+   Готовый `.pkg` также лежит в результатах запуска (Artifacts) — его можно отправить вручную
+   программой **Transporter**.
+5. В App Store Connect откройте версию 1.0 → «Сборка» → «+» → выберите сборку → **Отправить на
+   проверку**.
 
-1. **Второе окно — отдельный процесс.** Новый документ в новом окне сейчас запускает ещё одну копию
-   программы и передаёт ей путь к файлу. В песочнице разрешение на файл не передаётся новому
-   процессу, и он не сможет открыть файл. Нужно открывать окна в одном процессе или передавать
-   закладку безопасности (security-scoped bookmark).
-2. **Недавние документы** хранятся как пути. После перезапуска в песочнице они не откроются —
-   нужно хранить закладки безопасности (право `files.bookmarks.app-scope` уже включено).
-3. **Печать** идёт через системную команду печати; в песочнице её надо проверить
-   (право `print` включено).
-4. **Канал управления** (`--control`, MCP) открывает локальный сетевой порт; в версии для App
-   Store его лучше отключить (сетевые права не запрошены).
-5. **Table** читает настройки Write, чтобы взять ту же цветовую тему. В песочнице у каждой
-   программы своя папка, и Table их не увидит — для Table в App Store нужна общая группа
-   приложений (App Group) или своя тема.
+Собрать на своём Mac тоже можно: `packaging/macos/appstore/build.sh` (переменные — в начале
+скрипта).
+
+## 5. Песочница: что уже сделано и что проверить
+
+В App Store Write работает в **песочнице**: он видит только те файлы, которые пользователь выбрал сам.
+
+- **Сделано:** документы, которые открыли или сохранили, запоминаются через закладки безопасности
+  (`crates/sandbox`, `apps/wordcraft/src/bookmarks.rs`). Поэтому недавние документы открываются
+  после перезапуска, а документ, открытый в новом окне (это отдельный процесс), там доступен.
+- **Сделано:** в песочнице нельзя создать временный файл рядом с документом. Поэтому сохранение
+  пишет документ на месте, а при ошибке возвращает прежнюю версию (`crates/engine/src/io/safe_save.rs`).
+- **Проверить в TestFlight перед отправкой:** открыть, сохранить, «Сохранить как», недавние документы
+  после перезапуска, второе окно, печать, диктовку, экспорт PDF.
 
 Проверка ревьюеров Apple обычно занимает 1–3 дня. Частые причины отказа: падение при запуске,
 нерабочие ссылки на политику и поддержку, кнопки, которые ничего не делают, и названия других
