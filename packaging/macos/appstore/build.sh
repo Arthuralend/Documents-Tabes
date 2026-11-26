@@ -64,6 +64,12 @@ mkdir -p "$WORK/bin" "$DIST"
 inputs=()
 for t in "${TARGETS[@]}"; do inputs+=("$CARGO_TARGET_DIR/$t/release/wordcraft"); done
 lipo -create -output "$WORK/bin/wordcraft" "${inputs[@]}"
+# App Review refuses private window-server calls (CGS…/SLS…) automatically; stop here instead.
+if PRIVATE="$(nm -u "$WORK/bin/wordcraft" | grep -E '^ *_(CGS|SLS)[A-Z]' | sort -u)" && [ -n "$PRIVATE" ]; then
+  echo "error: the binary references private macOS APIs the App Store rejects:" >&2
+  echo "$PRIVATE" >&2
+  exit 1
+fi
 
 # ---- the bundle --------------------------------------------------------------------------------
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
