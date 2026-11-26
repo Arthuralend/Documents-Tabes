@@ -27,3 +27,10 @@ the prompt and tore the window down inside `-[NSApplication run]`.
 `applicationShouldHandleReopen:hasVisibleWindows:` (a click on the running app in the Dock or
 Launchpad) sets a flag the app reads with `platform::macos::take_reopen_request()`; Документы then
 opens a new document.
+
+## macOS: no private APIs
+
+`Window::set_blur` is a no-op on macOS: upstream calls the private `CGSSetWindowBackgroundBlurRadius`
+and `CGSMainConnectionID`, and the Mac App Store refuses a binary that references them (Guideline
+2.5.1, "non-public or deprecated APIs"). Their declarations are removed from
+`src/platform_impl/macos/ffi.rs`, so the symbols aren't linked at all.
